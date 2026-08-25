@@ -1,0 +1,134 @@
+@keyframes skel-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skel {
+  display: inline-block;
+  vertical-align: middle;
+  background: linear-gradient(90deg, #e8eef8 0%, #f5f8ff 40%, #e8eef8 80%);
+  background-size: 800px 100%;
+  animation: skel-shimmer 1.25s ease-in-out infinite;
+  border-radius: 8px;
+  min-height: 10px;
+}
+
+.skel-circle {
+  border-radius: 50% !important;
+}
+
+.skel-page {
+  animation: skel-fade-in 0.2s ease;
+}
+
+@keyframes skel-fade-in {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.skel-page-header {
+  margin-bottom: 1.25rem;
+}
+
+.skel-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.skel-card {
+  border: 1px solid #e7ebf0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 20px rgba(20, 31, 56, 0.06) !important;
+  overflow: hidden;
+}
+
+.skel-stat-card {
+  min-height: 140px;
+}
+
+.skel-panel {
+  border: 1px solid #e9edf4;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fafcff;
+  min-height: 220px;
+}
+
+.skel-form-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.skel-table-wrap {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.skel-table-head,
+.skel-table-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 0.25rem;
+}
+
+.skel-table-head {
+  border-bottom: 1px solid #e9edf4;
+  margin-bottom: 0.25rem;
+}
+
+.skel-table-row {
+  border-bottom: 1px solid #f0f3f8;
+}
+
+.skel-table-row:last-child {
+  border-bottom: 0;
+}
+
+.skel-table-cell {
+  max-width: 100%;
+}
+
+.skel-auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  padding: 1.5rem;
+}
+
+.skel-auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  text-align: center;
+}
+
+.skel-auth-card .skel {
+  text-align: left;
+}
+
+@media (max-width: 576px) {
+  .skel-table-head,
+  .skel-table-row {
+    gap: 0.5rem;
+  }
+}

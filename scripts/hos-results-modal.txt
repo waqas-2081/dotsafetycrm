@@ -1,0 +1,56 @@
+id="hoursOfServiceModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white justify-content-between">
+                <h5 class="modal-title text-white"><i class="fas fa-clock me-2"></i>Hours of Service Questionnaire <?php if(isset($hoursOfServiceTest) && $hoursOfServiceTest && $hoursOfServiceTest->completed_at): ?> <span class="badge bg-success ms-2">Completed</span> <?php endif; ?></h5>
+                <?php if(isset($hoursOfServiceTest) && $hoursOfServiceTest && $hoursOfServiceTest->completed_at): ?>
+                    <div class="text-white"><strong>Score: <?php echo e($hoursOfServiceTest->correct_answers); ?>/<?php echo e($hoursOfServiceTest->total_questions); ?> (<?php echo e(number_format($hoursOfServiceTest->score_percentage, 1)); ?>%)</strong></div>
+                <?php endif; ?>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <?php
+                $hosCorrectAnswers = $correctAnswers['hoursOfService'] ?? [];
+                $hosQuestionOptions = ['hos_regulations'=>['Police Officers','All of these answers are correct','D.O.T. Officials','Carriers'],'hos_stands'=>['Hours on Site','Home Time Optimization System','Hours of Service','Highway Organization System'],'dot_stands'=>['Department of Transportation','Department of Timekeeping','Days of On-Duty Time','Diary of Time'],'logbook_inspect'=>['Your carrier can audit your logbook anytime','At any weight station your logbook can be checked for any reason','All of these answers are correct','During a random traffic stop by any police officer'],'max_limits'=>['None of these are correct','The 16 hour on duty limit, the 10 hours driving time limit, and the 50/60 hour on duty limit','The 14 hour on duty limit, the 11 hours driving time limit, and the 60/70 hour on duty limit','The 11 hour on duty limit, the 14 hours driving time limit, and the 70/80 hour on duty limit'],'on_duty_limit'=>['From the time you first go on duty after a 10 consecutive hour break, you are allowed 14 consecutive hours to use your 11-hour drive time','You must rest for at least 14 consecutive hours each day','You can drive up to 14 consecutive hours per day','You are allowed to drive for 7 hours then must take a 7-hour break'],'eleven_hour_limit'=>['You must take 11 consecutive hours off duty before you are allowed to drive','Once you have driven a total of 11 hours in any consecutive hours of on duty time, you have reached the driving limit and must be off duty for another 10 consecutive hours before driving your truck again','You can only drive between the hours of 9 AM to 8 PM each day','You may not perform any on duty work (driving or non-driving duties) after 11 consecutive hours have passed since you began your work day'],'thirtyfour_restart'=>['If you drive less than 34 hours in 7 days, all your hours will reset','If you take at least two 17-hour breaks within an 8-day period, all your hours will reset','The regulations allow you to restart your 60 or 70-hour clock calculations after having at least 34 consecutive hours off duty','After you have been on duty for 34 hours, you must take a 70-hour break'],'off_duty_time'=>['When you are relieved of all duty and responsibility for performing work','Anytime you aren\'t driving','Time spent doing paid work for anyone who is not a motor carrier','Time inspecting or servicing your truck'],'on_duty_time'=>['All time loading and unloading your truck','All of these are considered on duty time','All driving time','All time inspecting or servicing your truck, including fueling']];
+                $hosQuestionsText = ['hos_regulations'=>'1. Who enforces H.O.S. regulations?','hos_stands'=>'2. What does H.O.S. stand for?','dot_stands'=>'3. What does D.O.T. stand for?','logbook_inspect'=>'4. When can your logbook be inspected?','max_limits'=>'5. There are three maximum limits you must follow at all times. Those limits are:','on_duty_limit'=>'6. What does the 14 hours On Duty limit mean?','eleven_hour_limit'=>'7. Which statement below accurately describes the 11 hour driving limit?','thirtyfour_restart'=>'8. What is a 34-hour restart?','off_duty_time'=>'9. Which of the following is considered off duty time?','on_duty_time'=>'10. Which of the following is considered on duty time?'];
+                ?>
+                <div class="row">
+                    <?php $__currentLoopData = $hosQuestionsText; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fname => $qtext): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="col-md-6">
+                        <div class="question-block p-3 border rounded">
+                            <label class="form-label fw-bold mb-3"><?php echo e($qtext); ?></label>
+                            <?php $__currentLoopData = $hosQuestionOptions[$fname]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $option): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php $userAnswer = isset($hoursOfServiceTest) && $hoursOfServiceTest ? $hoursOfServiceTest->{$fname} : null; $correctAnswer = $hosCorrectAnswers[$fname] ?? null; $isSelected = $userAnswer == $option; $isCorrectOption = $correctAnswer == $option; ?>
+                            <div class="form-check <?php echo e($isSelected ? ($isCorrectOption ? 'correct-answer' : 'incorrect-answer') : ''); ?>">
+                                <input class="form-check-input" type="radio" name="<?php echo e($fname); ?>_modal" value="<?php echo e($option); ?>" <?php echo e($isSelected ? 'checked' : ''); ?> disabled>
+                                <label class="form-check-label"><?php echo e($option); ?></label>
+                                <?php if($isSelected): ?> <?php if($isCorrectOption): ?> <i class="fas fa-check text-success ms-2"></i> <?php else: ?> <i class="fas fa-times text-danger ms-2"></i> <?php endif; ?> <?php endif; ?>
+                            </div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                    </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="preTripInspectionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white justify-content-between">
+                <h5 class="modal-title text-white"><i class="fas fa-clipboard-check me-2"></i>Pre-Trip Inspection Questionnaire <?php if(isset($preTripInspection) && $preTripInspection && $preTripInspection->completed_at): ?> <span class="badge bg-success ms-2">Completed</span> <?php endif; ?></h5>
+                <div class="d-flex align-items-center">
+                    <?php if(isset($preTripInspection) && $preTripInspection && $preTripInspection->completed_at): ?>
+                        <div class="text-white me-3"><strong>Score: <?php echo e($preTripInspection->correct_answers); ?>/<?php echo e($preTripInspection->total_questions); ?> (<?php echo e(number_format($preTripInspection->score_percentage, 1)); ?>%)</strong></div>
+                    <?php endif; ?>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <div class="modal-body p-4">
+                <?php
+                $preTripCorrectAnswers = $correctAnswers['preTripInspection'] ?? [];
+                $preTripQuestionOptions2 = ['degree_of_play'=>['10','12','5','45'],'air_line_color'=>['Green','Red','Blue'],'missing_nut_bolts'=>['Steering column and gear box.','Windshield and mirror.','Sleeper and cargo.','None of the above'],'prevent_damage'=>['Tank Mounting Straps','Landing Gear','Fuel Cap','Tire Flaps'],'intersecting_cracks'=>['8','3','4','2'],'minimum_tread_depth'=>["4/32'","2'","9/32'","1/2'"],'mud_flaps'=>['True','False'],'inspection_required'=>['Law','The Food and Drug Administration','Company Policy','A and C'],'brake_shoe_lining'=>['True','False'],'proper_inspection'=>['Construction Zones','Out of Service Violations','Damaged Product','People with Insomnia']];
+                $preTripQuestionsText = ['degree_of_play'=>'1. More than ****** degrees of play in the steering wheel is considered excessive.','air_line_color'=>'2. What is the color of the Emergency Air Line that connects the tractor to the trailer?','missing_nut_bolts'=>'3. Check your ****** and ****** fo

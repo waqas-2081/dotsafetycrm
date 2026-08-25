@@ -1,0 +1,128 @@
+viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <span class="section-title">All Quizzes Results</span>
+    </div>
+    <div class="section-body">
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1.1rem;">
+            <?php
+            $quizzes = [
+                ['title'=>'English Driver Questionnaire','duration'=>'10 Minutes','icon'=>'ph-question','test'=>$englishQuestionnaire ?? null,'modal'=>'englishQuestionaireModal'],
+                ['title'=>'Hours of Service Questionnaire','duration'=>'10 Minutes','icon'=>'ph-clock','test'=>$hoursOfServiceTest ?? null,'modal'=>'hoursOfServiceModal'],
+                ['title'=>'Pre-Trip Inspection Questionnaire','duration'=>'10 Minutes','icon'=>'ph-magnifying-glass','test'=>$preTripInspection ?? null,'modal'=>'preTripInspectionModal'],
+                ['title'=>'Traffic & Road Sign Test','duration'=>'30 Minutes','icon'=>'ph-warning','test'=>$trafficSignsTest ?? null,'modal'=>'trafficSignModal'],
+            ];
+            ?>
+            <?php $__currentLoopData = $quizzes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $quiz): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div style="background:#fff; border:1.5px solid #dce8ff; border-radius:12px; padding:1.25rem; display:flex; flex-direction:column; gap:0.75rem; box-shadow:0 2px 8px rgba(30,70,160,0.06); position:relative;">
+                <div style="position:absolute; top:0.6rem; right:0.6rem; background:var(--accent); color:#fff; font-size:0.68rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:20px;"><?php echo e($quiz['duration']); ?></div>
+                <div>
+                    <p style="font-size:0.88rem; font-weight:700; color:var(--navy); line-height:1.4; margin-bottom:0.35rem;"><?php echo e($quiz['title']); ?></p>
+                </div>
+                <?php if($quiz['test'] && $quiz['test']->completed_at ?? false): ?>
+                    <div style="background:#dcf5ec; border:1px solid #a8e6cf; border-radius:8px; padding:0.6rem 0.75rem;">
+                        <p style="font-size:0.78rem; font-weight:700; color:#0d7a5e; margin-bottom:0.2rem;">Completed!</p>
+                        <p style="font-size:0.75rem; color:#0d7a5e;">Score: <?php echo e($quiz['test']->correct_answers); ?>/<?php echo e($quiz['test']->total_questions); ?> (<?php echo e(number_format($quiz['test']->score_percentage, 1)); ?>%)</p>
+                        <p style="font-size:0.75rem; color:#0d7a5e;">Completed on: <?php echo e(\Carbon\Carbon::parse($quiz['test']->completed_at)->setTimezone('America/Chicago')->format('Y-m-d h:i A')); ?></p>
+                    </div>
+                    <button type="button" class="btn-save" style="justify-content:center; font-size:0.8rem;" data-bs-toggle="modal" data-bs-target="#<?php echo e($quiz['modal']); ?>">
+                        <i class="ph-duotone ph-eye me-1"></i>View Results
+                    </button>
+                <?php else: ?>
+                    <div style="background:#fff4dc; border:1px solid #f0d080; border-radius:8px; padding:0.6rem 0.75rem;">
+                        <p style="font-size:0.78rem; font-weight:700; color:#8a6000;">Not Attempted</p>
+                        <p style="font-size:0.75rem; color:#8a6000;">User has not attempted this quiz yet</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </div>
+    </div>
+</div>
+
+
+<?php $__currentLoopData = $application->files; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+<?php $extension = strtolower($file->file_type); $isImage = in_array($extension, ['jpg','jpeg','png','gif']); ?>
+<div class="printdocs page-break" style="width:100%; text-align:center;">
+    <?php if($isImage): ?>
+        <img src="<?php echo e(asset('public/storage/' . $file->file_path)); ?>"
+             style="max-width:100%; max-height:100vh; object-fit:contain; display:block; margin:0 auto;"
+             alt="<?php echo e($file->file_name); ?>">
+    <?php else: ?>
+        <div style="padding:2rem; font-size:1rem;">
+            <strong>Attached File:</strong> <?php echo e($file->file_name); ?>
+
+        </div>
+    <?php endif; ?>
+</div>
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+</form>
+
+
+<?php $__currentLoopData = $all_applications ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $application_print): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+<div class="personal-info-section" id="personalInfo-<?php echo e($application_print->id); ?>" style="display:none;">
+    <div class="info-section mb-4">
+        <div class="row">
+            <?php $__currentLoopData = [['Full Name',$application_print->driver_name],['Company Name',$application_print->company_name],['Driver Type',$application_print->driver_type],['Address',$application_print->driver_address],['City',$application_print->driver_city],['State',$application_print->driver_state],['Zip',$application_print->driver_zipcode],['Driver Phone',$application_print->driver_phone],['Alternate Phone',$application_print->alternate_phone],['Driver SSN',$application_print->driver_ssn],['Date Of Birth',$application_print->date_of_birth],['License Number',$application_print->license_number],['License State',$application_print->license_state],['License Class',$application_print->license_class],['License Expiry',$application_print->license_expiry],['Medical Card #',$application_print->medicalcard_number],['Medical Card Exp',$application_print->medicalcard_expiry],['Visa Number',$application_print->visa_number],['Visa Expiry',$application_print->visa_expiry]]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$label,$value]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="col-md-6"><div class="info-item"><strong><?php echo e($label); ?>:</strong><br/><?php echo e($value); ?></div></div>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </div>
+    </div>
+</div>
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+</div>
+
+
+<div class="form-fixed-actions">
+    <button type="submit" form="edit-form" class="btn-update-form" onclick="document.querySelector('.step-form-content').submit();">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Update Application Form
+    </button>
+</div>
+
+</div>
+</div>
+
+
+
+
+
+<div class="modal fade" id="englishQuestionaireModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white justify-content-between">
+                <h5 class="modal-title text-white"><i class="fas fa-clock me-2"></i>English Questionnaire Test</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="englishQuestionaireForm">
+                    <div class="row">
+                        <div class="col-md-4"><div class="form-group"><label>Employer's Name</label><input type="text" class="form-control" name="quest_emp_name" value="<?php echo e($application->company?->company_name); ?>"></div></div>
+                        <div class="col-md-4"><div class="form-group"><label>Driver's Name</label><input type="text" class="form-control" name="quest_driver_name" value="<?php echo e($application->driver_name); ?>"></div></div>
+                        <div class="col-md-4"><div class="form-group"><label>Date</label><input type="date" class="form-control" name="quest_date" value="<?php echo e($application->application_date); ?>"></div></div>
+                        <?php $__currentLoopData = ['quest_hauling'=>"What are you hauling?",'quest_license'=>"Let me see your driver's license",'quest_insurance'=>"Let me see your insurance",'quest_where'=>"Where are you from?",'quest_live'=>"Where do you live?",'quest_coming'=>"Where are you coming from?",'quest_going'=>"Where are you going?",'quest_truck_number'=>"What is your truck number?",'quest_trailer_number'=>"What is your trailer number?",'quest_cargo'=>"What's your cargo?",'quest_driver_experience'=>"For how long have you been a driver?",'quest_last_company'=>"Which was the last company you worked for?",'quest_trip_start'=>"Where did you start your trip today?",'quest_carrying'=>"What are you carrying?",'quest_driving_duration'=>"For how long have you been driving today?",'quest_border_frequency'=>"How many times a week do you cross the border?",'quest_border_every_trip'=>"Do you cross the border every trip?",'quest_break_time'=>"What time did you take your break?",'quest_license_number'=>"What's your driver's license number?",'quest_dob'=>"What's your date of birth?",'quest_age'=>"How old are you?",'quest_stop_time'=>"What time are you planning to stop driving today?"]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fname => $flabel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="col-md-6"><div class="form-group"><label><?php echo e($flabel); ?></label><input type="text" class="form-control" name="<?php echo e($fname); ?>" value="<?php echo e($englishQuestionnaire->$fname ?? ''); ?>"></div></div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="hoursOfServiceModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white justify-content-between">
+                <h5 class="modal-title text-white"><i class="fas fa-clock me-2"></i>Hours of Service Questionnaire <?php if(isset($hoursOfServiceTest) && $hoursOfServiceTest && $hoursOfServiceTest->completed_at): ?> <span class="badge bg-success ms-2">Completed</span> <?php endif; ?></h5>
+                <?php if(isset($hoursOfServiceTest) && $hoursOfServiceTest && $hoursOfServiceTest->completed_at): ?>
+                    <div class="text-white"><strong>Score: <?php echo e($hoursOfServiceTest->correct_answers); ?>/<?php echo e($hoursOfServiceTest->total_questions); ?> (<?php echo e(number_format($hoursOfServiceTest->score_percentage, 1)); ?>%)</strong></div>
+                <?php endif; ?>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <?php
+                $hosCorrectAnswers = $correctAnswers['hoursOfService'] ?? [];
+                $hosQuestionOptions = ['hos_regulations'=>['Police Officers','All of these answers are correct','D.O.T. Officials','Carriers'],'hos_stands'=>['Hours on Site','Home Time Optimization System','Hours of Service','Highway Organization System'],'dot_stands'=>['Department of Transportation','Department of Timekeeping','Days of On-Duty Time','Diary of Time'],'logbook_inspect'=>['Your carrier can audit your logbook anytime','At any weight station your logbook can be checked for any reason','All of these answers are correct','During a random traffic stop by any police officer'],'max_limits'=>['None of these are correct','The 16 hour on duty limit, the 10 hou

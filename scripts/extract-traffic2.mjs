@@ -1,0 +1,11 @@
+import fs from 'fs';
+const f = 'd:/react project/dotsafetyadmin/backend/storage/framework/views/b70284fa6bb6c356f73e0b39518ce956.php';
+const s = fs.readFileSync(f, 'utf8');
+const i = s.indexOf('trafficSignsModal');
+fs.writeFileSync('d:/react project/dotsafetyadmin/frontend/scripts/traffic-modal.txt', s.slice(i, i + 4000));
+const j = s.indexOf('name="question_');
+console.log('name question at', j);
+console.log(s.slice(j, j + 800));
+const k = s.indexOf('foreach ($qData');
+console.log('foreach', k);
+console.log(s.slice(k, k + 1200));

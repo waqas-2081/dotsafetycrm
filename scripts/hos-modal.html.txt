@@ -1,0 +1,77 @@
+id="hoursOfServiceModal" tabindex="-1" aria-hidden="false" data-bs-backdrop="static" data-bs-keyboard="false" data-totalquestions="10">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white justify-content-between">
+                <h5 class="modal-title text-white"><i class="fas fa-clock me-2"></i>Hours of Service Questionnaire</h5>
+                <div class="d-flex align-items-center"><span class="badge bg-light text-primary me-3 timer-display" id="timerDisplay"><i class="fas fa-stopwatch me-1"></i><span id="timeRemaining">10:00</span></span></div>
+            </div>
+            <div class="modal-body p-4">
+                <form id="hoursOfServiceForm">
+                    <div class="form-grid-3" style="margin-bottom:1rem;">
+                        <div class="field"><label class="field-label">Employer's Name</label><input type="text" class="field-input" value="<?php echo e($application->company_name); ?>" readonly></div>
+                        <div class="field"><label class="field-label">Driver's Name</label><input type="text" class="field-input" value="<?php echo e($application->driver_name); ?>" readonly></div>
+                        <div class="field"><label class="field-label">Date</label><input type="date" class="field-input" value="<?php echo e($application->application_date); ?>" readonly></div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold">Question <span id="currentStep">1</span> of 10</span></div>
+                        <div class="progress"><div class="progress-bar" id="progressBar" role="progressbar" style="width:10%"></div></div>
+                    </div>
+                    <?php $hosQs = ['hos_regulations'=>['Who enforces H.O.S. regulations?',['Police Officers','All of these answers are correct','D.O.T. Officials','Carriers']],'hos_stands'=>['What does H.O.S. stand for?',['Hours on Site','Home Time Optimization System','Hours of Service','Highway Organization System']],'dot_stands'=>['What does D.O.T. stand for?',['Department of Transportation','Department of Timekeeping','Days of On-Duty Time','Diary of Time']],'logbook_inspect'=>['When can your logbook be inspected?',['Your carrier can audit your logbook anytime','At any weight station your logbook can be checked for any reason','All of these answers are correct','During a random traffic stop by any police officer']],'max_limits'=>['There are three maximum limits you must follow at all times. Those limits are:',['None of these are correct','The 16 hour on duty limit, the 10 hours driving time limit, and the 50/60 hour on duty limit','The 14 hour on duty limit, the 11 hours driving time limit, and the 60/70 hour on duty limit','The 11 hour on duty limit, the 14 hours driving time limit, and the 70/80 hour on duty limit']],'on_duty_limit'=>['What does the 14 hours On Duty limit mean?',['From the time you first go on duty after a 10 consecutive hour break, you are allowed 14 consecutive hours to use your 11-hour drive time','You must rest for at least 14 consecutive hours each day','You can drive up to 14 consecutive hours per day','You are allowed to drive for 7 hours then must take a 7-hour break']],'eleven_hour_limit'=>['Which statement below accurately describes the 11 hour driving limit?',['You must take 11 consecutive hours off duty before you are allowed to drive','Once you have driven a total of 11 hours in any consecutive hours of on duty time, you have reached the driving limit and must be off duty for another 10 consecutive hours before driving your truck again','You can only drive between the hours of 9 AM to 8 PM each day','You may not perform any on duty work (driving or non-driving duties) after 11 consecutive hours have passed since you began your work day']],'thirtyfour_restart'=>['What is a 34-hour restart?',['If you drive less than 34 hours in 7 days, all your hours will reset','If you take at least two 17-hour breaks within an 8-day period, all your hours will reset','The regulations allow you to restart your 60 or 70-hour clock calculations after having at least 34 consecutive hours off duty','After you have been on duty for 34 hours, you must take a 70-hour break']],'off_duty_time'=>['Which of the following is considered off duty time?',['When you are relieved of all duty and responsibility for performing work','Anytime you aren\'t driving','Time spent doing paid work for anyone who is not a motor carrier','Time inspecting or servicing your truck']],'on_duty_time'=>['Which of the following is considered on duty time?',['All time loading and unloading your truck','All of these are considered on duty time','All driving time','All time inspecting or servicing your truck, including fueling']]]; ?>
+                    <?php $__currentLoopData = $hosQs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fn => [$qtext, $options]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php $step = $loop->index + 1; ?>
+                    <div class="question-step <?php echo e($step === 1 ? 'active' : ''); ?>" data-step="<?php echo e($step); ?>">
+                        <div class="question-block p-3 border rounded">
+                            <label class="form-label fw-bold mb-3"><?php echo e($step); ?>. <?php echo e($qtext); ?></label>
+                            <?php $__currentLoopData = $options; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $oi => $opt): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <div class="form-check"><input class="form-check-input" type="radio" name="<?php echo e($fn); ?>" value="<?php echo e($opt); ?>" id="<?php echo e($fn); ?>_<?php echo e($oi); ?>"><label class="form-check-label" for="<?php echo e($fn); ?>_<?php echo e($oi); ?>"><?php echo e($opt); ?></label></div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                    </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between w-100 align-items-center">
+                    <small class="text-muted">Time Limit: <span id="timeStatus">10 minutes</span></small>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary me-2" id="prevBtn" onclick="previousQuestion()" disabled><i class="fas fa-chevron-left me-1"></i>Previous</button>
+                        <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next<i class="fas fa-chevron-right ms-1"></i></button>
+                        <button type="button" class="btn btn-success d-none" id="submitBtn" onclick="submitQuiz()"><i class="fas fa-check me-1"></i>Submit Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="preTripInspectionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" data-totalquestions="10">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white justify-content-between">
+                <h5 class="modal-title text-white"><i class="fas fa-clipboard-check me-2"></i>Pre-Trip Inspection Questionnaire</h5>
+                <div class="d-flex align-items-center"><span class="badge bg-light text-primary me-3 timer-display" id="timerDisplay"><i class="fas fa-stopwatch me-1"></i><span id="timeRemaining">10:00</span></span></div>
+            </div>
+            <div class="modal-body p-4">
+                <form id="preTripInspectionForm">
+                    <div class="form-grid-3" style="margin-bottom:1rem;">
+                        <div class="field"><label class="field-label">Employer's Name</label><input type="text" class="field-input" value="<?php echo e($application->company_name); ?>" readonly></div>
+                        <div class="field"><label class="field-label">Driver's Name</label><input type="text" class="field-input" value="<?php echo e($application->driver_name); ?>" readonly></div>
+                        <div class="field"><label class="field-label">Date</label><input type="date" class="field-input" value="<?php echo e($application->application_date); ?>" readonly></div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold">Question <span id="currentStep">1</span> of 10</span></div>
+                        <div class="progress"><div class="progress-bar" id="progressBar" role="progressbar" style="width:10%"></div></div>
+                    </div>
+                    <?php $ptQs = ['degree_of_play'=>['More than ****** degrees of play in the steering wheel is considered excessive.',['10','12','5','45']],'air_line_color'=>['What is the color of the Emergency Air Line that connects the tractor to the trailer?',['Green','Red','Blue']],'missing_nut_bolts'=>['Check your ****** and ****** for any missing nuts or bolts.',['Steering column and gear box.','Windshield and mirror.','Sleeper and cargo.','None of the above']],'prevent_damage'=>['The ****** should be fully raised and the crank handle secured to prevent damage.',['Tank Mounting Straps','Landing Gear','Fuel Cap','Tire Flaps']],'intersecting_cracks'=>['How many intersecting cracks in your windshield will cause a violation?',['8','3','4','2']],'minimum_tread_depth'=>["The minimum tread depth on the steering axle tires is ******.",["4/32'","2'","9/32'","1/2'"]],'mud_flaps'=>['Mud flaps are required on your tractor and your trailer, but if they are missing, it is not an out-of-service violation.',['True','False']],'inspection_required'=>['Pre-trip inspections are required by ******.',['Law','The Food and Drug Administration','Company Policy','A and C']],'brake_shoe_lining'=>['A brake shoe lining or shoe and drum contaminated by oil or grease is an out-of-service violation.',['True','False']],'proper_inspection'=>['The majority of ****** can be spotted during a proper pre-trip inspection.',['Construction Zones','Out of Service Violations','Damaged Product','People with Insomnia']]]; ?>
+                    <?php $__currentLoopData = $ptQs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fn => [$qtext, $options]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php $step = $loop->index + 1; ?>
+                    <div class="question-step <?php echo e($step === 1 ? 'active' : ''); ?>" data-step="<?php echo e($step); ?>">
+                        <div class="question-block p-3 border rounded">
+                            <label class="radiolabel fw-bold mb-3"><?php echo e($step); ?>. <?php echo e($qtext); ?></label>
+                            <?php $__currentLoopData = $options; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $oi => $opt): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <div class="form-check"><input class="form-check-input" type="radio" name="<?php echo e($fn); ?>" value="<?php echo e($opt); ?>" id="pt_<?php echo e($fn); ?>_<?php echo e($oi); ?>"><label class="form-check-label" for="pt_<?php echo e($fn); ?>_<?php echo e($oi); ?>"><?php echo e($opt); ?></label></div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                       

@@ -1,0 +1,126 @@
+class ModalTimer {
+    constructor(modalId, initialTime=600, quizType='') {
+        this.modalId=modalId; this.initialTime=initialTime; this.timeLeft=initialTime;
+        this.timer=null; this.isTimerActive=false; this.quizType=quizType; this.startTime=null; this.currentStep=1;
+        this.modal=document.getElementById(modalId);
+        this.timeRemainingElement=this.modal?.querySelector('[id="timeRemaining"]');
+        this.timerDisplayElement=this.modal?.querySelector('[id="timerDisplay"]');
+        this.timeStatusElement=this.modal?.querySelector('[id="timeStatus"]');
+        this.totalSteps=parseInt(this.modal?.getAttribute('data-totalquestions'))||10;
+        this.initializeEventListeners(); this.initializeAnswerSelection();
+    }
+    startTimer() {
+        if(this.isTimerActive) return; this.isTimerActive=true; this.startTime=Date.now();
+        this.timer=setInterval(()=>{ this.timeLeft--; this.updateTimerDisplay(); if(this.timeLeft<=0){clearInterval(this.timer);this.handleTimeUp();} },1000);
+    }
+    stopTimer(){ if(this.timer){clearInterval(this.timer);this.isTimerActive=false;} }
+    resetTimer(){ this.stopTimer(); this.timeLeft=this.initialTime; this.updateTimerDisplay(); this.startTime=null; this.currentStep=1; this.showStep(1); }
+    getTimeTaken(){ return this.startTime ? Math.floor((Date.now()-this.startTime)/1000) : 0; }
+    updateTimerDisplay() {
+        var mins=Math.floor(this.timeLeft/60), secs=this.timeLeft%60;
+        var ts=`${mins}:${secs.toString().padStart(2,'0')}`;
+        if(this.timeRemainingElement) this.timeRemainingElement.textContent=ts;
+        if(this.timeStatusElement) this.timeStatusElement.textContent=ts+' remaining';
+        if(this.timerDisplayElement){
+            this.timerDisplayElement.classList.remove('timer-warning','timer-danger');
+            if(this.timeLeft<=60) this.timerDisplayElement.classList.add('timer-danger');
+            else if(this.timeLeft<=180) this.timerDisplayElement.classList.add('timer-warning');
+        }
+    }
+    updateProgress() {
+        var pct=(this.currentStep/this.totalSteps)*100;
+        var pb=this.modal?.querySelector('[id="progressBar"]'), cs=this.modal?.querySelector('[id="currentStep"]');
+        if(pb) pb.style.width=pct+'%'; if(cs) cs.textContent=this.currentStep;
+    }
+    showStep(step) {
+        if(!this.modal) return;
+        this.modal.querySelectorAll('.question-step').forEach(el=>el.classList.remove('active'));
+        var el=this.modal.querySelector(`[data-step="${step}"]`); if(el) el.classList.add('active');
+        var prevBtn=this.modal.querySelector('[id="prevBtn"]'), nextBtn=this.modal.querySelector('[id="nextBtn"]'), submitBtn=this.modal.querySelector('[id="submitBtn"]');
+        if(prevBtn) prevBtn.disabled=step===1;
+        if(step===this.totalSteps){ if(nextBtn) nextBtn.classList.add('d-none'); if(submitBtn) submitBtn.classList.remove('d-none'); }
+        else { if(nextBtn) nextBtn.classList.remove('d-none'); if(submitBtn) submitBtn.classList.add('d-none'); }
+        this.updateProgress();
+    }
+    nextQuestion(){ if(this.currentStep<this.totalSteps){this.currentStep++;this.showStep(this.currentStep);} }
+    previousQuestion(){ if(this.currentStep>1){this.currentStep--;this.showStep(this.currentStep);} }
+    initializeAnswerSelection() {
+        if(!this.modal) return;
+        this.handleAnswerChange=this.handleAnswerChange.bind(this);
+        this.modal.addEventListener('change',this.handleAnswerChange);
+    }
+    handleAnswerChange(e) {
+        var target = e.target;
+        if ((target.type === 'radio' || target.type === 'checkbox') && target.name) {
+            var self = this;
+            setTimeout(function() {
+                if (self.currentStep < self.totalSteps) self.nextQuestion();
+            }, 500);
+        }
+    }
+    handleTimeUp(){ alert('Time is up! The quiz will be submitted automatically.'); this.submitQuiz(); }
+    async submitQuiz() {
+        if(this.quizType==='english'&&!this.validateEnglish()) return;
+        this.stopTimer();
+        var formId={english:'englishQuestionaireForm','hours-of-service':'hoursOfServiceForm','pre-trip':'preTripInspectionForm','traffic-signs':'trafficSignForm'}[this.quizType]||'quizForm';
+        var form=this.modal?.querySelector(`#${formId}`)||this.modal?.querySelector('form');
+        if(!form) return;
+        var formData=new FormData(form); formData.append('time_taken',this.getTimeTaken());
+        var applicationId=document.querySelector('meta[name="application-id"]')?.content||1;
+        var endpoints={english:`/quiz/english-questionnaire/${applicationId}`,'hours-of-service':`/quiz/hours-of-service/${applicationId}`,'pre-trip':`/quiz/pre-trip-inspection/${applicationId}`,'traffic-signs':`/quiz/traffic-signs/${applicationId}`};
+        var endpoint=endpoints[this.quizType];
+        if(!endpoint) return;
+        var submitBtn=this.modal.querySelector('[id="submitBtn"]');
+        if(submitBtn){submitBtn.disabled=true;submitBtn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Submitting...';}
+        try {
+            var response=await fetch(endpoint,{method:'POST',body:formData,headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').getAttribute('content'),'Accept':'application/json'}});
+            var result=await response.json();
+            if(result.success){ this.showResults(result.results); this.updateQuizCard(result.results); }
+            else { throw new Error(result.message||'Submission failed'); }
+        } catch(error){ console.error('Quiz submission error:',error); }
+        finally { if(submitBtn){submitBtn.disabled=false;submitBtn.innerHTML='<i class="fas fa-check me-1"></i>Submit Quiz';} }
+    }
+    validateEnglish(){ return true; } // basic pass-through
+    showResults(results) {
+        var existing=document.getElementById('quizResultsModal'); if(existing) existing.remove();
+        var html=`<div class="modal fade" id="quizResultsModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title text-white">Quiz Results</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><h4>Your Score: ${results.score_percentage}%</h4><p>Correct Answers: <strong>${results.correct_answers}</strong> out of <strong>${results.total_questions}</strong></p><p>Time Taken: <strong>${Math.floor(results.time_taken/60)}m ${results.time_taken%60}s</strong></p><div class="progress mb-3"><div class="progress-bar ${results.score_percentage>=70?'bg-success':results.score_percentage>=50?'bg-warning':'bg-danger'}" style="width:${results.score_percentage}%"></div></div></div><div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button></div></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend',html);
+        new bootstrap.Modal(document.getElementById('quizResultsModal')).show();
+        var mi=bootstrap.Modal.getInstance(this.modal); if(mi) mi.hide();
+    }
+    updateQuizCard(results) {
+        var card=document.querySelector(`[data-quiz-type="${this.quizType}"]`); if(!card) return;
+        var aa=card.querySelector('.quiz-action-area'); if(!aa) return;
+        aa.innerHTML=`<div class="alert-success-new"><p>Completed!</p><span>Score: ${results.correct_answers}/${results.total_questions} (${results.score_percentage.toFixed(1)}%)</span></div>`;
+    }
+    initializeEventListeners() {
+        if(!this.modal) return;
+        this.boundShow=()=>{this.resetTimer();this.startTimer();};
+        this.boundHide=()=>{this.stopTimer();this.resetTimer();};
+        this.modal.addEventListener('shown.bs.modal',this.boundShow);
+        this.modal.addEventListener('hidden.bs.modal',this.boundHide);
+        this.updateTimerDisplay();
+    }
+    destroy() {
+        if(!this.modal) return;
+        this.modal.removeEventListener('shown.bs.modal',this.boundShow);
+        this.modal.removeEventListener('hidden.bs.modal',this.boundHide);
+        this.modal.removeEventListener('change',this.handleAnswerChange);
+        this.stopTimer();
+    }
+}
+
+var modalTimers={};
+function getActiveTimer() {
+    var m = document.querySelector('.modal.show');
+    if (!m) return null;
+    return modalTimers[m.id] || null;
+}
+function submitQuiz() { var t = getActiveTimer(); if(t) t.submitQuiz(); }
+function nextQuestion() { var t = getActiveTimer(); if(t) t.nextQuestion(); else console.warn('No active timer found'); }
+function previousQuestion() { var t = getActiveTimer(); if(t) t.previousQuestion(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+    Object.values(modalTimers).forEach(t=>{ if(t&&typeof t.destroy==='function') t.destroy(); });
+    modalTimers={};
+    [['englishQuestionaireModal',600,'english'],['hoursOfServiceModal',600,'hours-of

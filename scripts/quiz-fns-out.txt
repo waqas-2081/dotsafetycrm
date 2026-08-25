@@ -1,0 +1,104 @@
+﻿
+### nextQuestion fn 163763
+imers[m.id] || null;
+}
+function submitQuiz() { var t = getActiveTimer(); if(t) t.submitQuiz(); }
+function nextQuestion() { var t = getActiveTimer(); if(t) t.nextQuestion(); else console.warn('No active timer found'); }
+function previousQuestion() { var t = getActiveTimer(); if(t) t.previousQuestion(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+    Object.values(modalTimers).forEach(t=>{ if(t&&typeof t.destroy==='function') t.destroy(); });
+    modalTimers={};
+    [['englishQuestionaireModal',600,'english'],['hoursOfServiceModal',600,'hours-of-service'],['preTripInspectionModal',600,'pre-trip'],['trafficSignModal',1800,'traffic-signs']].forEach(([id,time,type])=>{
+        if(document.getElementById(id)) modalTimers[id]=new ModalTimer(id,time,type);
+    });
+    window.addEventListener('beforeunload',function(e){
+        var at=Object.values(modalTimers).find(t=>t&&t.isTimerActive);
+        if(at){e.preventDefault();e.returnValue='You have an active quiz. Are you sure you want to leave?';return e.returnValue;}
+    });
+});
+</script>
+</body>
+</html><?php /**PATH /home/dotsafetyservice/admin.dotsafetyservice.com/resources/views/form.blade.php ENDPATH**/ ?>
+
+### previousQuestion fn 163886
+ { var t = getActiveTimer(); if(t) t.nextQuestion(); else console.warn('No active timer found'); }
+function previousQuestion() { var t = getActiveTimer(); if(t) t.previousQuestion(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+    Object.values(modalTimers).forEach(t=>{ if(t&&typeof t.destroy==='function') t.destroy(); });
+    modalTimers={};
+    [['englishQuestionaireModal',600,'english'],['hoursOfServiceModal',600,'hours-of-service'],['preTripInspectionModal',600,'pre-trip'],['trafficSignModal',1800,'traffic-signs']].forEach(([id,time,type])=>{
+        if(document.getElementById(id)) modalTimers[id]=new ModalTimer(id,time,type);
+    });
+    window.addEventListener('beforeunload',function(e){
+        var at=Object.values(modalTimers).find(t=>t&&t.isTimerActive);
+        if(at){e.preventDefault();e.returnValue='You have an active quiz. Are you sure you want to leave?';return e.returnValue;}
+    });
+});
+</script>
+</body>
+</html><?php /**PATH /home/dotsafetyservice/admin.dotsafetyservice.com/resources/views/form.blade.php ENDPATH**/ ?>
+
+### question-step css 13381
+ap; overflow:hidden; text-overflow:ellipsis; }
+
+        /* ΓöÇΓöÇ QUIZ MODAL OVERRIDES ΓöÇΓöÇ */
+        .question-step { display:none; }
+        .question-step.active { display:block; }
+        .question-block { border-radius:10px!important; }
+        .quizimg { max-width:180px; height:auto; margin:.75rem 0; display:block; }
+        .answer-option.selected-answer { background:#e8f0ff; border-color:var(--accent); }
+        .timer-warning { background:#ffc107!important; color:#000!important; animation:pulse-warning 2s infinite; }
+        .timer-danger { background:#dc3545!important; color:#fff!important; animation:pulse-danger 1s infinite; }
+        @keyframes pulse-warning { 0%,100%{opacity:1} 50%{opacity:.7} }
+        @keyframes pulse-danger { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+        /* ΓöÇΓöÇ DIVIDER ΓöÇΓöÇ */
+        .divider { height:1px; background:var(--border); margin:1.25rem 0; }
+
+        /* ΓöÇΓöÇ ALERTS ΓöÇΓöÇ */
+        .alert-success-new { background:#dcf5ec; border:1px solid #a8e6cf; border-radius:8px; padding:.75rem 1rem; }
+        .alert-success-new p { font-size:.78rem; font-weight:700; color:#0d7a5e; margin:0 0 .2rem; }
+        .alert-success-new span { font-size:.75rem; color:#0d7a5e; }
+
+        /* ΓöÇΓöÇ RESPONSIVE ΓöÇΓöÇ */
+        @media(max-width:768px) { .form-grid,.form-grid-3,.form-grid-4,.signature-row { grid-template-columns:1fr!important; } .form-meta-card { flex-direction:column; } .step-nav { display:none; } }
+        @media only screen and (max-width:500px) { .form-meta-card .meta-photo { width:80px; height:80px; } }
+
+        /* ΓöÇΓöÇ PRINT ΓöÇΓöÇ */
+        @media print {
+            .step-nav,.btn-submit-main,.btn-add-row,.btn-remove-row,.dropzone { display:none!important; }
+            .section-card { box-shadow:none; border:1px solid #ccc; }
+            .form-meta-card { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+        }
+        
+        .form-fixed-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1020;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(to top, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.97));
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 24px rgba(10, 22, 40, 0.08);
+        }
+    </style>
+</head>
+
+<body data-layout="detached" data-topbar="colored">
+<div class="container-fluid">
+<div id="layou
+
+### showStep -1
+
+### updateStep 122692
+s="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold">Question <span id="currentStep">1</span> of 10</span></div>
+                        <div class="progress"><div class="progress-bar" id="progressBar" role="progressbar" style="width:10%"></div></div>
+                    </div>
+                    <?php $hosQs = ['hos_regulations'=>['Who enforces H.O.S. regulations?',['Police Officers','All of these answers are correct','D.O.T. Officials','Carriers']],'hos_stands'=>['What does H.O.S. stand for?',['Hours on Site','Home Time Optimization System','Hours of Service','Highway Organization System']],'dot_stands'=>['What does D.O.T. stand for?',['Department of Transportation','Department of Timekeeping','Days of On-Duty Time','Diary of Time']],'logbook_inspect'=>['When can your logbook be inspected?',['Your carrier can audit your logbook anytime','At any weight station your logbook can be checked for any reason','All of these answers are correct','During a random traffic stop by any police officer']],'max_limits'=>['There are three maximum limits you must follow at all times. Those limits are:',['None of these are correct','The 16 hour on duty limit, the 10 hours driving time limit, and the 50/60 hour on duty limit','The 14 hour on duty limit, the 11 hours driving time limit, and the 60/70 hour on duty limit','The 11 hour on duty limit, the 14 hours driving time limit, and the 70/80 hour on duty limit']],'on_duty_limit'=>['What does the 14 hours On Duty limit mean?',['From the time you first go on duty after a 10 consecutive hour break, you are allowed 14 consecutive hours to use your 11-hour drive time','You must rest for at least 14 consecutive hours each day','You can drive up to 14 consecutive hours per day','You are allowed to drive for 7 hours then must take a 7-hour break']],'eleven_hour_limit'=>['Which statement below accurately describes the 11 hour driving limit?',['You must take 11 consecutive hours off duty before you are allowed to drive','Once you have driven a total of 11 hours in any consecutive hours of on duty time, you have reached the driving limit and must be off duty for another 10 consecutive hours before driving your truck again','You can only drive between the hours of 9 AM to 8 PM each day','You may not perform any on duty work (driving or non-driving duties) after 11 consecutive hours have passed since you began your work day']],'thirtyfour_restart'=>['What is a 34-hour restart?',['If you drive less than 34 hours in 7 days, all your hours will reset','If you take at least two 17-hour breaks within an 8-d
