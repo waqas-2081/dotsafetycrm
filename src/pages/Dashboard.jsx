@@ -27,6 +27,16 @@ function ExpiryMeta({ days, date }) {
   return <span className="text-warning fw-semibold text-sm">{days}d ({date})</span>;
 }
 
+function StatCard({ to, children }) {
+  return (
+    <Link to={to} className="dashboard-stat-link text-decoration-none">
+      <div className="card statistics-card-1 overflow-hidden h-100 dashboard-stat-card">
+        {children}
+      </div>
+    </Link>
+  );
+}
+
 function DriverPanel({ label, icon, color, items }) {
   const count = items?.length || 0;
   const cardBorder =
@@ -197,6 +207,9 @@ export default function Dashboard() {
   const { isAdmin, isUser } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [smsEnabled, setSmsEnabled] = useState(true);
+  const [telnyxConfigured, setTelnyxConfigured] = useState(false);
+  const [smsSaving, setSmsSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -205,7 +218,11 @@ export default function Dashboard() {
     api
       .get('/dashboard', { signal: controller.signal })
       .then((res) => {
-        if (!cancelled) setData(res.data);
+        if (!cancelled) {
+          setData(res.data);
+          setSmsEnabled(!!res.data?.sms_settings?.driver_sms_enabled);
+          setTelnyxConfigured(!!res.data?.sms_settings?.telnyx_configured);
+        }
       })
       .catch((err) => {
         if (cancelled || err?.code === 'ERR_CANCELED') return;
@@ -217,6 +234,20 @@ export default function Dashboard() {
       controller.abort();
     };
   }, []);
+
+  const toggleDriverSms = async () => {
+    setSmsSaving(true);
+    try {
+      const { data: response } = await api.put('/sms-settings', {
+        driver_sms_enabled: !smsEnabled,
+      });
+      setSmsEnabled(!!response.driver_sms_enabled);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update SMS settings.');
+    } finally {
+      setSmsSaving(false);
+    }
+  };
 
   if (error) {
     return (
@@ -251,8 +282,26 @@ export default function Dashboard() {
                 </ul>
               </div>
               <div className="col-md-12">
-                <div className="page-header-title">
+                <div className="page-header-title d-flex align-items-center justify-content-between flex-wrap gap-2">
                   <h2 className="mb-0">Dashboard</h2>
+                  {isAdmin && (
+                    <div className="dashboard-sms-toggle">
+                      <span className={`dashboard-sms-status ${smsEnabled ? 'is-on' : 'is-off'}`}>
+                        Driver SMS: {smsEnabled ? 'On' : 'Off'}
+                      </span>
+                      <button
+                        type="button"
+                        className={`btn btn-sm ${smsEnabled ? 'btn-outline-danger' : 'btn-outline-success'}`}
+                        onClick={toggleDriverSms}
+                        disabled={smsSaving}
+                      >
+                        {smsSaving ? 'Saving...' : smsEnabled ? 'Turn Off SMS' : 'Turn On SMS'}
+                      </button>
+                      {!telnyxConfigured && (
+                        <span className="text-muted small">Telnyx not configured in .env</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -309,22 +358,42 @@ export default function Dashboard() {
 
         {isAdmin && (
           <>
-            <div className="row">
-              <div className="col-md-3 col-sm-6">
-                <div className="card statistics-card-1 overflow-hidden">
+            <div className="dashboard-stats-grid">
+              <StatCard to="/application-forms">
+                <div className="card-body">
+                  <img
+                    src="/assets/images/widget/img-status-4.svg"
+                    alt=""
+                    className="img-fluid img-bg"
+                  />
+                  <h5 className="mb-4">Total Forms</h5>
+                  <div className="d-flex align-items-center mt-3">
+                    <h3 className="f-w-300 d-flex align-items-center m-b-0">{stats.total_forms}</h3>
+                  </div>
+                  <p className="text-muted mb-2 text-sm mt-3">View All &#8593;</p>
+                  <div className="progress" style={{ height: 7 }}>
+                    <div
+                      className="progress-bar bg-brand-color-3"
+                      role="progressbar"
+                      style={{ width: '75%' }}
+                    ></div>
+                  </div>
+                </div>
+              </StatCard>
+
+              {stats.show_total_members && (
+                <StatCard to="/members">
                   <div className="card-body">
                     <img
-                      src="/assets/images/widget/img-status-4.svg"
-                      alt="img"
+                      src="/assets/images/widget/img-status-5.svg"
+                      alt=""
                       className="img-fluid img-bg"
                     />
-                    <h5 className="mb-4">Total Forms</h5>
+                    <h5 className="mb-4">Total Members</h5>
                     <div className="d-flex align-items-center mt-3">
-                      <h3 className="f-w-300 d-flex align-items-center m-b-0">{stats.total_forms}</h3>
+                      <h3 className="f-w-300 d-flex align-items-center m-b-0">{stats.total_members}</h3>
                     </div>
-                    <p className="text-muted mb-2 text-sm mt-3">
-                      <Link to="/application-forms">View All &#8593;</Link>
-                    </p>
+                    <p className="text-muted mb-2 text-sm mt-3">View All &#8593;</p>
                     <div className="progress" style={{ height: 7 }}>
                       <div
                         className="progress-bar bg-brand-color-3"
@@ -333,194 +402,142 @@ export default function Dashboard() {
                       ></div>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {stats.show_total_members && (
-                <div className="col-md-3 col-sm-6">
-                  <div className="card statistics-card-1 overflow-hidden">
-                    <div className="card-body">
-                      <img
-                        src="/assets/images/widget/img-status-5.svg"
-                        alt="img"
-                        className="img-fluid img-bg"
-                      />
-                      <h5 className="mb-4">Total Members</h5>
-                      <div className="d-flex align-items-center mt-3">
-                        <h3 className="f-w-300 d-flex align-items-center m-b-0">{stats.total_members}</h3>
-                      </div>
-                      <p className="text-muted mb-2 text-sm mt-3">
-                        <Link to="/members">View All &#8593;</Link>
-                      </p>
-                      <div className="progress" style={{ height: 7 }}>
-                        <div
-                          className="progress-bar bg-brand-color-3"
-                          role="progressbar"
-                          style={{ width: '75%' }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                </StatCard>
               )}
 
-              <div className="col-md-3 col-sm-6">
-                <div className="card statistics-card-1 overflow-hidden">
-                  <div className="card-body">
-                    <img
-                      src="/assets/images/widget/img-status-6.svg"
-                      alt="img"
-                      className="img-fluid img-bg"
-                    />
-                    <h5 className="mb-4">Total Companies</h5>
-                    <div className="d-flex align-items-center mt-3">
-                      <h3 className="f-w-300 d-flex align-items-center m-b-0">{stats.total_companies}</h3>
-                    </div>
-                    <p className="text-opacity-75 mb-2 text-sm mt-3">
-                      <Link to="/companies">View All &#8593;</Link>
-                    </p>
-                    <div className="progress bg-opacity-10" style={{ height: 7 }}>
-                      <div className="progress-bar" role="progressbar" style={{ width: '75%' }}></div>
-                    </div>
+              <StatCard to="/companies">
+                <div className="card-body">
+                  <img
+                    src="/assets/images/widget/img-status-6.svg"
+                    alt=""
+                    className="img-fluid img-bg"
+                  />
+                  <h5 className="mb-4">Total Companies</h5>
+                  <div className="d-flex align-items-center mt-3">
+                    <h3 className="f-w-300 d-flex align-items-center m-b-0">{stats.total_companies}</h3>
+                  </div>
+                  <p className="text-opacity-75 mb-2 text-sm mt-3">View All &#8593;</p>
+                  <div className="progress bg-opacity-10" style={{ height: 7 }}>
+                    <div className="progress-bar" role="progressbar" style={{ width: '75%' }}></div>
                   </div>
                 </div>
-              </div>
+              </StatCard>
 
-              <div className="col-md-3 col-sm-6">
-                <div className="card statistics-card-1 overflow-hidden">
-                  <div className="card-body">
-                    <div className="d-flex align-items-center mb-2">
-                      <div className="avtar avtar-s bg-light-success me-2">
-                        <i className="ph-duotone ph-check-circle text-success"></i>
-                      </div>
-                      <h5 className="mb-0">Total Active Drivers</h5>
+              <StatCard to="/application-forms?is_active=yes">
+                <div className="card-body">
+                  <div className="d-flex align-items-center mb-2">
+                    <div className="avtar avtar-s bg-light-success me-2">
+                      <i className="ph-duotone ph-check-circle text-success"></i>
                     </div>
-                    <div className="d-flex align-items-center mt-3">
-                      <h3 className="f-w-300 text-success d-flex align-items-center m-b-0">
-                        {stats.total_active_drivers}
-                      </h3>
-                    </div>
-                    <p className="text-muted mb-2 text-sm mt-3">
-                      <Link to="/application-forms">View All &#8593;</Link>
-                    </p>
-                    <div className="progress" style={{ height: 7 }}>
-                      <div
-                        className="progress-bar bg-success"
-                        role="progressbar"
-                        style={{ width: '75%' }}
-                      ></div>
-                    </div>
+                    <h5 className="mb-0">Total Active Drivers</h5>
+                  </div>
+                  <div className="d-flex align-items-center mt-3">
+                    <h3 className="f-w-300 text-success d-flex align-items-center m-b-0">
+                      {stats.total_active_drivers}
+                    </h3>
+                  </div>
+                  <p className="text-muted mb-2 text-sm mt-3">View All &#8593;</p>
+                  <div className="progress" style={{ height: 7 }}>
+                    <div
+                      className="progress-bar bg-success"
+                      role="progressbar"
+                      style={{ width: '75%' }}
+                    ></div>
                   </div>
                 </div>
-              </div>
+              </StatCard>
 
-              <div className="col-md-3 col-sm-6">
-                <div className="card statistics-card-1 overflow-hidden">
-                  <div className="card-body">
-                    <div className="d-flex align-items-center mb-2">
-                      <div className="avtar avtar-s bg-light-danger me-2">
-                        <i className="ph-duotone ph-x-circle text-danger"></i>
-                      </div>
-                      <h5 className="mb-0">Total Inactive Drivers</h5>
+              <StatCard to="/application-forms?is_active=no">
+                <div className="card-body">
+                  <div className="d-flex align-items-center mb-2">
+                    <div className="avtar avtar-s bg-light-danger me-2">
+                      <i className="ph-duotone ph-x-circle text-danger"></i>
                     </div>
-                    <div className="d-flex align-items-center mt-3">
-                      <h3 className="f-w-300 text-danger d-flex align-items-center m-b-0">
-                        {stats.total_inactive_drivers}
-                      </h3>
-                    </div>
-                    <p className="text-muted mb-2 text-sm mt-3">
-                      <Link to="/application-forms">View All &#8593;</Link>
-                    </p>
-                    <div className="progress" style={{ height: 7 }}>
-                      <div
-                        className="progress-bar bg-danger"
-                        role="progressbar"
-                        style={{ width: '75%' }}
-                      ></div>
-                    </div>
+                    <h5 className="mb-0">Total Inactive Drivers</h5>
+                  </div>
+                  <div className="d-flex align-items-center mt-3">
+                    <h3 className="f-w-300 text-danger d-flex align-items-center m-b-0">
+                      {stats.total_inactive_drivers}
+                    </h3>
+                  </div>
+                  <p className="text-muted mb-2 text-sm mt-3">View All &#8593;</p>
+                  <div className="progress" style={{ height: 7 }}>
+                    <div
+                      className="progress-bar bg-danger"
+                      role="progressbar"
+                      style={{ width: '75%' }}
+                    ></div>
                   </div>
                 </div>
-              </div>
+              </StatCard>
 
-              <div className="col-md-3 col-sm-6">
-                <div className="card statistics-card-1 overflow-hidden">
-                  <div className="card-body">
-                    <div className="d-flex align-items-center mb-2">
-                      <div className="avtar avtar-s bg-light-info me-2">
-                        <i className="ph-duotone ph-translate text-info"></i>
-                      </div>
-                      <h5 className="mb-0">Total English Capable</h5>
+              <StatCard to="/application-forms?english_capable=1">
+                <div className="card-body">
+                  <div className="d-flex align-items-center mb-2">
+                    <div className="avtar avtar-s bg-light-info me-2">
+                      <i className="ph-duotone ph-translate text-info"></i>
                     </div>
-                    <div className="d-flex align-items-center mt-3">
-                      <h3 className="f-w-300 text-info d-flex align-items-center m-b-0">
-                        {stats.total_english_capable}
-                      </h3>
-                    </div>
-                    <p className="text-muted mb-2 text-sm mt-3">
-                      <Link to="/application-forms">View All &#8593;</Link>
-                    </p>
-                    <div className="progress" style={{ height: 7 }}>
-                      <div className="progress-bar bg-info" role="progressbar" style={{ width: '75%' }}></div>
-                    </div>
+                    <h5 className="mb-0">Total English Capable</h5>
+                  </div>
+                  <div className="d-flex align-items-center mt-3">
+                    <h3 className="f-w-300 text-info d-flex align-items-center m-b-0">
+                      {stats.total_english_capable}
+                    </h3>
+                  </div>
+                  <p className="text-muted mb-2 text-sm mt-3">View All &#8593;</p>
+                  <div className="progress" style={{ height: 7 }}>
+                    <div className="progress-bar bg-info" role="progressbar" style={{ width: '75%' }}></div>
                   </div>
                 </div>
-              </div>
+              </StatCard>
 
-              <div className="col-md-3 col-sm-6">
-                <div className="card statistics-card-1 overflow-hidden">
-                  <div className="card-body">
-                    <div className="d-flex align-items-center mb-2">
-                      <div className="avtar avtar-s bg-light-primary me-2">
-                        <i className="ph-duotone ph-identification-card text-primary"></i>
-                      </div>
-                      <h5 className="mb-0">Total CDLs</h5>
+              <StatCard to="/application-forms?document_type=cdl">
+                <div className="card-body">
+                  <div className="d-flex align-items-center mb-2">
+                    <div className="avtar avtar-s bg-light-primary me-2">
+                      <i className="ph-duotone ph-identification-card text-primary"></i>
                     </div>
-                    <div className="d-flex align-items-center mt-3">
-                      <h3 className="f-w-300 text-primary d-flex align-items-center m-b-0">
-                        {stats.total_cdls}
-                      </h3>
-                    </div>
-                    <p className="text-muted mb-2 text-sm mt-3">
-                      <Link to="/application-forms">View All &#8593;</Link>
-                    </p>
-                    <div className="progress" style={{ height: 7 }}>
-                      <div
-                        className="progress-bar bg-primary"
-                        role="progressbar"
-                        style={{ width: '75%' }}
-                      ></div>
-                    </div>
+                    <h5 className="mb-0">Total CDLs</h5>
+                  </div>
+                  <div className="d-flex align-items-center mt-3">
+                    <h3 className="f-w-300 text-primary d-flex align-items-center m-b-0">
+                      {stats.total_cdls}
+                    </h3>
+                  </div>
+                  <p className="text-muted mb-2 text-sm mt-3">View All &#8593;</p>
+                  <div className="progress" style={{ height: 7 }}>
+                    <div
+                      className="progress-bar bg-primary"
+                      role="progressbar"
+                      style={{ width: '75%' }}
+                    ></div>
                   </div>
                 </div>
-              </div>
+              </StatCard>
 
-              <div className="col-md-3 col-sm-6">
-                <div className="card statistics-card-1 overflow-hidden">
-                  <div className="card-body">
-                    <div className="d-flex align-items-center mb-2">
-                      <div className="avtar avtar-s bg-light-warning me-2">
-                        <i className="ph-duotone ph-file-text text-warning"></i>
-                      </div>
-                      <h5 className="mb-0">Total B1s</h5>
+              <StatCard to="/application-forms?document_type=b1">
+                <div className="card-body">
+                  <div className="d-flex align-items-center mb-2">
+                    <div className="avtar avtar-s bg-light-warning me-2">
+                      <i className="ph-duotone ph-file-text text-warning"></i>
                     </div>
-                    <div className="d-flex align-items-center mt-3">
-                      <h3 className="f-w-300 text-warning d-flex align-items-center m-b-0">
-                        {stats.total_b1s}
-                      </h3>
-                    </div>
-                    <p className="text-muted mb-2 text-sm mt-3">
-                      <Link to="/application-forms">View All &#8593;</Link>
-                    </p>
-                    <div className="progress" style={{ height: 7 }}>
-                      <div
-                        className="progress-bar bg-warning"
-                        role="progressbar"
-                        style={{ width: '75%' }}
-                      ></div>
-                    </div>
+                    <h5 className="mb-0">Total B1s</h5>
+                  </div>
+                  <div className="d-flex align-items-center mt-3">
+                    <h3 className="f-w-300 text-warning d-flex align-items-center m-b-0">
+                      {stats.total_b1s}
+                    </h3>
+                  </div>
+                  <p className="text-muted mb-2 text-sm mt-3">View All &#8593;</p>
+                  <div className="progress" style={{ height: 7 }}>
+                    <div
+                      className="progress-bar bg-warning"
+                      role="progressbar"
+                      style={{ width: '75%' }}
+                    ></div>
                   </div>
                 </div>
-              </div>
+              </StatCard>
             </div>
 
             <div className="col-12 exp-module">

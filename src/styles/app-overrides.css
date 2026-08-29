@@ -314,4 +314,72 @@ body.swal2-shown .swal2-popup {
   }
 }
 
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
 
+@media (max-width: 1199.98px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-stat-link {
+  color: inherit;
+  display: block;
+  min-width: 0;
+  height: 100%;
+}
+
+.dashboard-stat-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  height: 100%;
+}
+
+.dashboard-stat-card .card-body {
+  min-height: 168px;
+}
+
+.dashboard-stat-link:hover .dashboard-stat-card {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(17, 54, 126, 0.12);
+}
+
+.dashboard-stat-link:focus-visible .dashboard-stat-card {
+  outline: 2px solid #4680ff;
+  outline-offset: 2px;
+}
+
+.dashboard-sms-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-sms-status {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+}
+
+.dashboard-sms-status.is-on {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.dashboard-sms-status.is-off {
+  background: #fee2e2;
+  color: #991b1b;
+}

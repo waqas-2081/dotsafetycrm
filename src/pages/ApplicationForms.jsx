@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { TableSkeleton } from '../components/PageSkeleton';
 
@@ -260,6 +260,24 @@ const ACTIVITY_COLORS = {
   default: '#6c757d',
 };
 
+const FILTER_LABELS = {
+  is_active_yes: 'Active drivers',
+  is_active_no: 'Inactive drivers',
+  document_type_cdl: 'CDL drivers',
+  document_type_b1: 'B1 drivers',
+  english_capable: 'English capable',
+};
+
+function activeFilterLabels(params) {
+  const labels = [];
+  if (params.is_active === 'yes') labels.push(FILTER_LABELS.is_active_yes);
+  if (params.is_active === 'no') labels.push(FILTER_LABELS.is_active_no);
+  if (params.document_type === 'cdl') labels.push(FILTER_LABELS.document_type_cdl);
+  if (params.document_type === 'b1') labels.push(FILTER_LABELS.document_type_b1);
+  if (params.english_capable) labels.push(FILTER_LABELS.english_capable);
+  return labels;
+}
+
 const SOURCE_BADGE_COLORS = {
   samsara: '#1e5fd4',
   motive: '#0d7a5e',
@@ -380,6 +398,14 @@ function Pagination({ pagination, onPageChange }) {
 }
 
 export default function ApplicationForms() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const listFilters = {
+    is_active: searchParams.get('is_active') || '',
+    document_type: searchParams.get('document_type') || '',
+    english_capable: searchParams.get('english_capable') === '1',
+  };
+  const activeFilters = activeFilterLabels(listFilters);
+
   const [applications, setApplications] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [canDelete, setCanDelete] = useState(false);
@@ -387,11 +413,11 @@ export default function ApplicationForms() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState('created_at');
-  const [direction, setDirection] = useState('desc');
-  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [sort, setSort] = useState(searchParams.get('sort') || 'created_at');
+  const [direction, setDirection] = useState(searchParams.get('direction') || 'desc');
+  const [page, setPage] = useState(Number(searchParams.get('page') || 1));
   const [searchSpinner, setSearchSpinner] = useState(false);
 
   const [uiAlert, setUiAlert] = useState({ show: false, type: 'success', message: '' });
@@ -432,6 +458,9 @@ export default function ApplicationForms() {
           sort,
           direction,
           page,
+          is_active: listFilters.is_active || undefined,
+          document_type: listFilters.document_type || undefined,
+          english_capable: listFilters.english_capable ? 1 : undefined,
         },
       });
       setApplications(data.applications || []);
@@ -444,11 +473,63 @@ export default function ApplicationForms() {
       setLoading(false);
       setSearchSpinner(false);
     }
-  }, [search, sort, direction, page]);
+  }, [search, sort, direction, page, listFilters.is_active, listFilters.document_type, listFilters.english_capable]);
+
+  const syncListParams = useCallback((updates = {}) => {
+    const params = new URLSearchParams(searchParams);
+    const next = {
+      search,
+      sort,
+      direction,
+      page,
+      is_active: listFilters.is_active,
+      document_type: listFilters.document_type,
+      english_capable: listFilters.english_capable ? '1' : '',
+      ...updates,
+    };
+
+    Object.entries(next).forEach(([key, value]) => {
+      if (value === '' || value === null || value === undefined || value === false) {
+        params.delete(key);
+      } else {
+        params.set(key, String(value));
+      }
+    });
+
+    if (Number(next.page) <= 1) {
+      params.delete('page');
+    }
+    if (next.sort === 'created_at') {
+      params.delete('sort');
+    }
+    if (next.direction === 'desc') {
+      params.delete('direction');
+    }
+
+    setSearchParams(params, { replace: true });
+  }, [search, sort, direction, page, listFilters, searchParams, setSearchParams]);
+
+  const clearListFilters = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('is_active');
+    params.delete('document_type');
+    params.delete('english_capable');
+    params.delete('page');
+    setSearchParams(params, { replace: true });
+    setPage(1);
+  };
 
   useEffect(() => {
     fetchList();
   }, [fetchList]);
+
+  useEffect(() => {
+    setSearch(searchParams.get('search') || '');
+    setSearchInput(searchParams.get('search') || '');
+    setSort(searchParams.get('sort') || 'created_at');
+    setDirection(searchParams.get('direction') || 'desc');
+    setPage(Number(searchParams.get('page') || 1));
+  }, [searchParams]);
 
   useEffect(() => {
     return () => {
@@ -465,12 +546,10 @@ export default function ApplicationForms() {
     if (value.trim().length > 0) setSearchSpinner(true);
     debounceRef.current = setTimeout(() => {
       setSearchSpinner(false);
+      const trimmed = value.trim();
       setPage(1);
-      if (value.trim().length === 0) {
-        setSearch('');
-      } else {
-        setSearch(value.trim());
-      }
+      setSearch(trimmed);
+      syncListParams({ search: trimmed, page: 1 });
     }, 800);
   };
 
@@ -478,18 +557,24 @@ export default function ApplicationForms() {
     setSearchInput('');
     setSearch('');
     setPage(1);
+    syncListParams({ search: '', page: 1 });
   };
 
   const handleSort = (field) => {
-    setPage(1);
+    let nextDirection = 'asc';
+    let nextSort = field;
     if (field === sort && direction === 'asc') {
-      setDirection('desc');
+      nextDirection = 'desc';
     } else if (field === sort) {
-      setDirection('asc');
+      nextDirection = 'asc';
     } else {
-      setSort(field);
-      setDirection('asc');
+      nextSort = field;
+      nextDirection = 'asc';
     }
+    setPage(1);
+    setSort(nextSort);
+    setDirection(nextDirection);
+    syncListParams({ sort: nextSort, direction: nextDirection, page: 1 });
   };
 
   const handleToggle = async (app, kind, checked) => {
@@ -709,6 +794,7 @@ export default function ApplicationForms() {
                         } else {
                           setPage(1);
                           setSearch(searchInput.trim());
+                          syncListParams({ search: searchInput.trim(), page: 1 });
                         }
                       }}
                     >
@@ -758,6 +844,20 @@ export default function ApplicationForms() {
               <span className="text-muted">
                 ({pagination?.total ?? 0} results found)
               </span>
+            </div>
+          ) : null}
+
+          {activeFilters.length > 0 ? (
+            <div className="alert alert-info mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <i className="ph-duotone ph-funnel me-1"></i>
+                Filtered by:{' '}
+                <strong>{activeFilters.join(', ')}</strong>
+                <span className="text-muted ms-1">({pagination?.total ?? 0} results)</span>
+              </div>
+              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={clearListFilters}>
+                Clear filters
+              </button>
             </div>
           ) : null}
 
@@ -1006,7 +1106,13 @@ export default function ApplicationForms() {
                     <p className="text-muted mb-0 small">
                       Showing {pagination?.from} to {pagination?.to} of {pagination?.total} results
                     </p>
-                    <Pagination pagination={pagination} onPageChange={setPage} />
+                    <Pagination
+                      pagination={pagination}
+                      onPageChange={(nextPage) => {
+                        setPage(nextPage);
+                        syncListParams({ page: nextPage });
+                      }}
+                    />
                   </div>
                 </>
               ) : (
@@ -1015,11 +1121,22 @@ export default function ApplicationForms() {
                     className="ph-duotone ph-magnifying-glass"
                     style={{ fontSize: '3rem', color: '#aab4c8' }}
                   ></i>
-                  {search ? (
+                  {search || activeFilters.length > 0 ? (
                     <>
                       <h5 className="mt-3">No applications found</h5>
-                      <p className="text-muted">No applications match &quot;{search}&quot;</p>
-                      <button type="button" className="btn btn-primary" onClick={clearSearch}>
+                      <p className="text-muted">
+                        {search
+                          ? `No applications match "${search}"`
+                          : 'No applications match the selected filters'}
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => {
+                          if (search) clearSearch();
+                          if (activeFilters.length > 0) clearListFilters();
+                        }}
+                      >
                         <i className="ph-duotone ph-arrow-left me-1"></i> Back to all applications
                       </button>
                     </>
