@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import PageSkeleton from '../../components/PageSkeleton';
-
-const PROFILE_IMG_URL = import.meta.env.VITE_PROFILE_IMG_URL || '';
+import { profileUrl } from '../../utils/storageUrl';
 
 const PAGE_STYLES = `
         .pm-card { border: 1px solid #dfe8f7; box-shadow: 0 8px 24px rgba(17,54,126,0.06); }
@@ -224,7 +223,7 @@ export default function MembersHistory() {
   }
 
   const initial = (member.name || '?').charAt(0).toUpperCase();
-  const profileSrc = member.profile ? `${PROFILE_IMG_URL}${member.profile}` : null;
+  const profileSrc = member.profile ? profileUrl(null, member.profile) : null;
 
   return (
     <>

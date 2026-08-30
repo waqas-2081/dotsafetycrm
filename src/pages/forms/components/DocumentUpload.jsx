@@ -90,7 +90,7 @@ export default function DocumentUpload({
       {error ? <div className="alert alert-danger mt-2">{error}</div> : null}
       <div className="uploaded-files-grid mt-3">
         {(files || []).map((file) => {
-          const url = file.url || fileUrl(storageBase, file.file_path || file.path);
+          const url = fileUrl(storageBase, file.url || file.file_path || file.path);
           const icon = iconFor(file.file_type || file.type);
           const name = file.file_name || file.name;
           return (

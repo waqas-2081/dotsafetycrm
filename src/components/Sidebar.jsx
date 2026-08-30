@@ -1,17 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { profileUrl } from '../utils/storageUrl';
 
-const PROFILE_IMG_URL = import.meta.env.VITE_PROFILE_IMG_URL || '';
-const DEFAULT_PROFILE =
-  'https://admin.dotsafetyservice.com/public/storage/profiles/defaultprofile.jpg';
+const DEFAULT_PROFILE = profileUrl(null, 'storage/profiles/defaultprofile.jpg');
 
 const HIDDEN_MEMBER_IDS = [86, 87, 96, 157, 482];
 
 export default function Sidebar() {
   const { user, isAdmin, isUser } = useAuth();
-  const profileSrc = user?.profile
-    ? `${PROFILE_IMG_URL}${user.profile}`
-    : DEFAULT_PROFILE;
+  const profileSrc = user?.profile ? profileUrl(null, user.profile) : DEFAULT_PROFILE;
   const showMembersSection = isAdmin && !HIDDEN_MEMBER_IDS.includes(Number(user?.id));
 
   return (

@@ -661,19 +661,7 @@ export function fmtDate(val) {
   }
 }
 
-export function fileUrl(storageBase, path) {
-  if (!path) return '#';
-  if (/^https?:\/\//i.test(path)) return path;
-  const base = (storageBase || '').replace(/\/$/, '');
-  const p = String(path).replace(/^\/?storage\/?/, '').replace(/^\/?app\/public\/?/, '');
-  return `${base}/${p}`;
-}
-
-export function profileUrl(base, profile) {
-  if (!profile) return null;
-  if (/^https?:\/\//i.test(profile)) return profile;
-  return `${(base || '').replace(/\/?$/, '/')}${String(profile).replace(/^\//, '')}`;
-}
+export { fileUrl, profileUrl } from '../../utils/storageUrl';
 
 export function emptyExperience() {
   return { type_of_equipment: '', years_of_experience: '', miles_driven: '' };
@@ -866,8 +854,14 @@ export function initStateFromPayload(data) {
     userId: app.user_id,
     companies: data.companies || [],
     files: data.applicationFiles || app.files || [],
-    profileImgBase: data.profile_img_base || '',
-    storageBase: data.storage_base || '',
+    profileImgBase:
+      import.meta.env.VITE_PROFILE_IMG_URL ||
+      data.profile_img_base ||
+      'https://adminapi.dotsafetyservice.com/',
+    storageBase:
+      import.meta.env.VITE_PROFILE_IMG_URL ||
+      data.storage_base ||
+      'https://adminapi.dotsafetyservice.com/',
     followUpEntries: data.followUpEntries || [],
     correctAnswers: data.correctAnswers || null,
     quizzes: {
