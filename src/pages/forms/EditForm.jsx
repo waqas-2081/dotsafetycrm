@@ -8,6 +8,7 @@ import {
   buildFormPayload,
   initStateFromPayload,
   profileUrl,
+  syncApplicantSignature,
 } from './formShared';
 import { showErrorPopup, showSuccessPopup } from '../../utils/popups';
 
@@ -40,7 +41,12 @@ export default function EditForm() {
   const setField = (name, value) => {
     setState((prev) => ({ ...prev, fields: { ...prev.fields, [name]: value } }));
   };
-  const setSig = (name, value) => setField(name, value);
+  const setSig = (name, value) => {
+    setState((prev) => ({
+      ...prev,
+      fields: syncApplicantSignature(prev.fields, name, value),
+    }));
+  };
 
   const submit = async (e) => {
     e.preventDefault();

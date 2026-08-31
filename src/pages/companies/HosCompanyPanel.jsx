@@ -131,6 +131,152 @@ function ViolCells({ source, row }) {
   );
 }
 
+function DiscHeaders({ source }) {
+  if (source === 'samsara') {
+    return (
+      <>
+        <th>Source/Vehicle</th>
+        <th>Details</th>
+        <th>Start Time</th>
+        <th>Duration</th>
+        <th>Status</th>
+        <th>Type</th>
+      </>
+    );
+  }
+  if (source === 'motive') {
+    return (
+      <>
+        <th>Vehicle</th>
+        <th>Disc. Time</th>
+        <th>Disc. Location</th>
+        <th>Disc. Odo.</th>
+        <th>Rec. Time</th>
+        <th>Rec. Location</th>
+        <th>Rec. Odo.</th>
+        <th>Distance</th>
+        <th>Status</th>
+      </>
+    );
+  }
+  return (
+    <>
+      <th>Driver Before</th>
+      <th>Status Before</th>
+      <th>Location Before</th>
+      <th>Odo. Before</th>
+      <th>DateTime Before</th>
+      <th>Driver After</th>
+      <th>Location After</th>
+      <th>Distance (mi)</th>
+      <th>Time Elapsed</th>
+    </>
+  );
+}
+
+function DiscCells({ source, row }) {
+  if (source === 'samsara') {
+    return (
+      <>
+        <td>{row.source_vehicle || '—'}</td>
+        <td>{row.details || '—'}</td>
+        <td>{row.start_time || '—'}</td>
+        <td>{row.duration || '—'}</td>
+        <td>{row.status || '—'}</td>
+        <td>{row.type || '—'}</td>
+      </>
+    );
+  }
+  if (source === 'motive') {
+    return (
+      <>
+        <td>{row.vehicle || '—'}</td>
+        <td>{row.disconnect_time || '—'}</td>
+        <td>{row.disconnect_location || '—'}</td>
+        <td>{row.disconnect_odometer || '—'}</td>
+        <td>{row.reconnect_time || '—'}</td>
+        <td>{row.reconnect_location || '—'}</td>
+        <td>{row.reconnect_odometer || '—'}</td>
+        <td>{row.distance || '—'}</td>
+        <td>{row.status || '—'}</td>
+      </>
+    );
+  }
+  return (
+    <>
+      <td>{row.driver_before_jump || '—'}</td>
+      <td>{row.status_before_jump || '—'}</td>
+      <td>{row.location_before_jump || '—'}</td>
+      <td>{row.odometer_before_jump || '—'}</td>
+      <td>{row.datetime_before_jump || '—'}</td>
+      <td>{row.driver_after_jump || '—'}</td>
+      <td>{row.location_after_jump || '—'}</td>
+      <td>{row.distance_miles || '—'}</td>
+      <td>{row.time_elapsed || '—'}</td>
+    </>
+  );
+}
+
+function UnidHeaders({ source }) {
+  if (source === 'samsara') {
+    return (
+      <>
+        <th>Vehicle</th>
+        <th>Unassigned Time</th>
+        <th>Unassigned Distance</th>
+        <th>Unassigned Seg.</th>
+        <th>Pending Seg.</th>
+        <th>Annotated Seg.</th>
+        <th>Tags</th>
+      </>
+    );
+  }
+  return (
+    <>
+      <th>Driver</th>
+      <th>ELD ID</th>
+      <th>Date</th>
+      <th>Status</th>
+      <th>Carrier</th>
+      <th>Home Base</th>
+      <th>Tractor</th>
+      <th>Trailer 1</th>
+      <th>Trailer 2</th>
+      <th>Trailer 3</th>
+    </>
+  );
+}
+
+function UnidCells({ source, row }) {
+  if (source === 'samsara') {
+    return (
+      <>
+        <td>{row.vehicle || '—'}</td>
+        <td>{row.unassigned_time || '—'}</td>
+        <td>{row.unassigned_distance || '—'}</td>
+        <td>{row.unassigned_segments ?? '—'}</td>
+        <td>{row.pending_segments ?? '—'}</td>
+        <td>{row.annotated_segments ?? '—'}</td>
+        <td>{row.tags || '—'}</td>
+      </>
+    );
+  }
+  return (
+    <>
+      <td>{row.driver_name || '—'}</td>
+      <td>{row.driver_eld_id || '—'}</td>
+      <td>{row.date || '—'}</td>
+      <td>{row.status || '—'}</td>
+      <td>{row.carrier || '—'}</td>
+      <td>{row.home_base || '—'}</td>
+      <td>{row.tractor || '—'}</td>
+      <td>{row.trailer_1 || '—'}</td>
+      <td>{row.trailer_2 || '—'}</td>
+      <td>{row.trailer_3 || '—'}</td>
+    </>
+  );
+}
+
 function ImportList({
   companyId,
   source,
@@ -294,8 +440,10 @@ function ImportList({
                       <th></th>
                       {type === 'violations' ? (
                         <ViolHeaders source={source} />
+                      ) : type === 'disconnection' ? (
+                        <DiscHeaders source={source} />
                       ) : (
-                        <th>Data</th>
+                        <UnidHeaders source={source} />
                       )}
                     </tr>
                   </thead>
@@ -320,13 +468,10 @@ function ImportList({
                           </td>
                           {type === 'violations' ? (
                             <ViolCells source={source} row={row} />
+                          ) : type === 'disconnection' ? (
+                            <DiscCells source={source} row={row} />
                           ) : (
-                            <td>
-                              <code style={{ fontSize: 11 }}>
-                                {JSON.stringify(row).slice(0, 180)}
-                                {JSON.stringify(row).length > 180 ? '…' : ''}
-                              </code>
-                            </td>
+                            <UnidCells source={source} row={row} />
                           )}
                         </tr>
                       ))

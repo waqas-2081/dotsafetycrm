@@ -699,6 +699,37 @@ export function emptyEmployment(driverType = '') {
 }
 
 /** Build multipart FormData matching Laravel field names from storeFormData / updateFormData */
+export const APPLICANT_SIGNATURE_FIELDS = [
+  'auth_signature',
+  'prevemp_signature',
+  'credreport_signature',
+  'violation_signature',
+  'alcohol_signature',
+  'commitment_signature',
+  'dot_consent_signature',
+  'drug_policy_signature',
+  'account_auth_signature',
+  'fmcsa_signature',
+  'disciplinary_signature',
+  'hos_signature',
+  'final_signature',
+];
+
+/** Copy one applicant signature to every other applicant signature field. */
+export function syncApplicantSignature(fields, name, value) {
+  const next = { ...fields, [name]: value };
+
+  if (!value || !APPLICANT_SIGNATURE_FIELDS.includes(name)) {
+    return next;
+  }
+
+  APPLICANT_SIGNATURE_FIELDS.forEach((key) => {
+    next[key] = value;
+  });
+
+  return next;
+}
+
 export function buildFormPayload(state, { includeCompanyId = false } = {}) {
   const fd = new FormData();
   const a = state.fields;
