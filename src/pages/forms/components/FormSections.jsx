@@ -3,6 +3,7 @@ import SignatureField from './SignatureField';
 import SectionCard from './SectionCard';
 import DocumentUpload from './DocumentUpload';
 import ConstanciaLfdBlock from './ConstanciaLfdBlock';
+import EmploymentVerificationBlock from './EmploymentVerificationBlock';
 import QuizSection from './QuizSection';
 import {
   DISCIPLINARY_VIOLATIONS,
@@ -561,27 +562,13 @@ export default function FormSections({
                       </select>
                     </Field>
                   </div>
-                  {emp.id && emp.id !== 'new' && (
-                    <div className="verification-section" style={{ borderTop: '1px solid var(--border)', marginTop: '.75rem', paddingTop: '.75rem' }}>
-                      <p style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--navy)', margin: '0 0 .25rem' }}>
-                        Employment Verification
-                      </p>
-                      {emp.is_verification_sent ? (
-                        emp.is_employment_verified ? (
-                          <span className="badge-verified">Verified</span>
-                        ) : (
-                          <span className="badge-pending">⏳ Verification Email Sent</span>
-                        )
-                      ) : (
-                        <small style={{ color: 'var(--muted)' }}>Send verification email to confirm employment details</small>
-                      )}
-                      {emp.request_id ? (
-                        <small style={{ display: 'block', color: 'var(--muted)', fontSize: '.72rem', marginTop: '.25rem' }}>
-                          Request ID: {emp.request_id}
-                        </small>
-                      ) : null}
-                    </div>
-                  )}
+                  {emp.id && emp.id !== 'new' ? (
+                    <EmploymentVerificationBlock
+                      mode={mode}
+                      employment={emp}
+                      onUpdate={(patch) => updateRow('employments', i, patch)}
+                    />
+                  ) : null}
                 </div>
               </div>
             ))}

@@ -592,6 +592,8 @@ export const DRIVER_TYPES = [
   'Bus',
   'Straight Truck',
   '18 Wheeler-Truck Tractor',
+  '18 Wheeler - Truck Tractor B1',
+  '18 Wheeler - Truck Tractor CDL',
 ];
 
 export const DISCIPLINARY_VIOLATIONS = [
