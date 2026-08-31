@@ -2,6 +2,7 @@ import { useState } from 'react';
 import SignatureField from './SignatureField';
 import SectionCard from './SectionCard';
 import DocumentUpload from './DocumentUpload';
+import ConstanciaLfdBlock from './ConstanciaLfdBlock';
 import QuizSection from './QuizSection';
 import {
   DISCIPLINARY_VIOLATIONS,
@@ -19,6 +20,12 @@ function Field({ label, children, full }) {
       {children}
     </div>
   );
+}
+
+function isVisaValid(visa) {
+  const v = String(visa || '').trim();
+  if (!v) return false;
+  return !['na', 'n/a'].includes(v.toLowerCase());
 }
 
 function RadioGroup({ question, name, value, onChange, options = ['Yes', 'No'], readOnly }) {
@@ -262,10 +269,28 @@ export default function FormSections({
               <Field label="Visa Expiration Date">
                 <input type="date" className="field-input" value={f.visa_expiry} disabled={readOnly} onChange={(e) => setField('visa_expiry', e.target.value)} />
               </Field>
-              <Field label="Constancia LFD" full>
-                <input type="date" className="field-input" value={f.constancia_lfd} disabled={readOnly} onChange={(e) => setField('constancia_lfd', e.target.value)} />
-              </Field>
             </div>
+            {(isVisaValid(f.visa_number) || f.constancia_lfd || f.constancia_lfd_file) ? (
+              <ConstanciaLfdBlock
+                mode={mode}
+                readOnly={readOnly}
+                constanciaLfd={f.constancia_lfd}
+                constanciaLfdFile={f.constancia_lfd_file}
+                pendingFile={state.constanciaLfdPendingFile}
+                applicationId={state.applicationId}
+                driverName={f.driver_name}
+                driverEmail={f.email_address}
+                storageBase={state.storageBase}
+                onDateChange={(value) => setField('constancia_lfd', value)}
+                onFileSelect={(file) =>
+                  setState((prev) => ({ ...prev, constanciaLfdPendingFile: file }))
+                }
+                onFileDeleted={() => {
+                  setField('constancia_lfd_file', '');
+                  setState((prev) => ({ ...prev, constanciaLfdPendingFile: null }));
+                }}
+              />
+            ) : null}
           </SectionCard>
 
           <SectionCard title="Driving Experience" iconBg="#1e5fd4" className="print-keep-together">

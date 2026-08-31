@@ -730,6 +730,9 @@ export function buildFormPayload(state, { includeCompanyId = false } = {}) {
   set('visa', a.visa_number);
   set('expiration-date-visa', a.visa_expiry);
   set('constancia_lfd', a.constancia_lfd);
+  if (state.constanciaLfdPendingFile) {
+    fd.append('constancia_lfd_file', state.constanciaLfdPendingFile);
+  }
   set('denied_license', a.denied_license);
   set('license_suspended', a.license_suspended);
   set('suspended_explain', a.suspended_explain);
@@ -862,6 +865,7 @@ export function initStateFromPayload(data) {
       import.meta.env.VITE_PROFILE_IMG_URL ||
       data.storage_base ||
       'https://adminapi.dotsafetyservice.com/',
+    constanciaLfdPendingFile: null,
     followUpEntries: data.followUpEntries || [],
     correctAnswers: data.correctAnswers || null,
     quizzes: {

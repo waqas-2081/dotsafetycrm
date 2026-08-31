@@ -58,6 +58,7 @@ export default function EditForm() {
         text: msg,
         confirmText: 'Great',
       });
+      await load();
     } catch (err) {
       const msg =
         err.response?.data?.message ||
