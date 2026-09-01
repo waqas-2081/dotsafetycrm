@@ -235,6 +235,7 @@ export default function EditForm() {
             activeStep={null}
             setField={setField}
             setSig={setSig}
+            onFollowUpRefresh={load}
           />
           <div className="form-fixed-actions">
             <button type="submit" className="btn-submit-main" disabled={saving}>

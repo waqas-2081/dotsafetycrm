@@ -113,6 +113,18 @@ const EDIT_STYLES = `
     text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #dde8f8;white-space:nowrap;
 }
 .hos-import-actions { display:flex;gap:6px;align-items:center;flex-wrap:wrap; }
+.hos-filter-panel {
+    border:1px solid #dde8f8;border-radius:10px;padding:14px 16px;background:#f8fbff;
+}
+.manual-row-card {
+    background:#fff;border:1px solid #dde8f8;border-radius:8px;padding:12px 14px;
+    margin-bottom:10px;position:relative;
+}
+.manual-row-remove {
+    position:absolute;top:8px;right:10px;color:#e53935;cursor:pointer;
+    background:none;border:none;font-size:16px;line-height:1;
+}
+.btn-xs { padding:0.15rem 0.4rem;font-size:0.75rem;line-height:1.2;border-radius:4px; }
 `;
 
 const DOC_FIELDS = [
@@ -151,6 +163,14 @@ const EMPTY_UNIT = {
 function basename(path) {
   if (!path) return '';
   return String(path).split('/').pop();
+}
+
+/** Document links use /storage/... not /public/storage/... */
+function companyDocumentUrl(storageBase, filePath) {
+  if (!filePath) return '#';
+  const base = String(storageBase || '').replace(/\/$/, '');
+  const path = String(filePath).replace(/^\/+/, '');
+  return `${base}/${path}`.replace('/public/storage/', '/storage/');
 }
 
 export default function CompanyEdit() {
@@ -684,7 +704,7 @@ export default function CompanyEdit() {
                                   {existing.map((filePath) => (
                                     <div className="file-item" key={filePath}>
                                       <a
-                                        href={`${storageBase}/${filePath}`}
+                                        href={companyDocumentUrl(storageBase, filePath)}
                                         target="_blank"
                                         rel="noreferrer"
                                       >
@@ -739,7 +759,7 @@ export default function CompanyEdit() {
                             {existingFileList('miscellaneous_file').map((filePath) => (
                               <div className="file-item" key={filePath}>
                                 <a
-                                  href={`${storageBase}/${filePath}`}
+                                  href={companyDocumentUrl(storageBase, filePath)}
                                   target="_blank"
                                   rel="noreferrer"
                                 >
@@ -900,7 +920,7 @@ export default function CompanyEdit() {
                                     {unit.documents.map((docPath) => (
                                       <div className="unit-doc-item" key={docPath}>
                                         <a
-                                          href={`${storageBase}/${docPath}`}
+                                          href={companyDocumentUrl(storageBase, docPath)}
                                           target="_blank"
                                           rel="noreferrer"
                                         >
@@ -1079,6 +1099,7 @@ export default function CompanyEdit() {
                       {activeHosSource ? (
                         <HosCompanyPanel
                           companyId={id}
+                          companyEmail={company?.email}
                           source={activeHosSource}
                           sourceLabel={SOURCE_LABELS[activeHosSource] || activeHosSource}
                           hosImports={hosImports}
@@ -1125,6 +1146,7 @@ export default function CompanyEdit() {
                           <div className="tab-content hos-company-content">
                             <HosCompanyPanel
                               companyId={id}
+                              companyEmail={company?.email}
                               source={hosSourceTab}
                               sourceLabel={SOURCE_LABELS[hosSourceTab]}
                               hosImports={hosImports}

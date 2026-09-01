@@ -3,6 +3,7 @@ import SignatureField from './SignatureField';
 import SectionCard from './SectionCard';
 import DocumentUpload from './DocumentUpload';
 import ConstanciaLfdBlock from './ConstanciaLfdBlock';
+import FollowUpProgramBlock from './FollowUpProgramBlock';
 import EmploymentVerificationBlock from './EmploymentVerificationBlock';
 import QuizSection from './QuizSection';
 import {
@@ -63,6 +64,7 @@ export default function FormSections({
   activeStep,
   setField,
   setSig,
+  onFollowUpRefresh,
 }) {
   const readOnly = mode === 'view';
   const f = state.fields;
@@ -751,6 +753,15 @@ export default function FormSections({
               </Field>
             </div>
           </SectionCard>
+
+          {mode === 'edit' ? (
+            <FollowUpProgramBlock
+              applicationId={state.applicationId}
+              initialEntries={state.followUpEntries}
+              storageBase={state.storageBase}
+              onRefresh={onFollowUpRefresh}
+            />
+          ) : null}
 
           <SectionCard title="Acknowledgement & Employee Commitment" iconBg="#0d7a5e">
             <div className="auth-box" style={{ marginBottom: '1.25rem' }}>

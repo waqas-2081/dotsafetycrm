@@ -359,7 +359,8 @@ body.swal2-shown > :not(.swal2-container) {
   .modal-backdrop,
   input[type="file"],
   .applicant-tag,
-  .quiz-action-area {
+  .quiz-action-area,
+  .followup-section {
     display: none !important;
   }
 
