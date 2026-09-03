@@ -81,6 +81,7 @@ export const FORM_PAGE_STYLES = `
 .badge-verified { display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .75rem; border-radius:20px; font-size:.74rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; background:#dcf5ec; color:#0d7a5e; border:1px solid #a8e6cf; }
 .badge-pending { background:#fff4dc; color:#8a6000; border:1px solid #f0d080; display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .75rem; border-radius:20px; font-size:.74rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
 
+.printscreenquizans { display: none; }
 .quiz-card { background:#fff; border:1.5px solid #dce8ff; border-radius:12px; padding:1.25rem; display:flex; flex-direction:column; gap:.75rem; box-shadow:0 2px 8px rgba(30,70,160,.06); position:relative; overflow:visible; min-height:140px; }
 .quiz-card .duration-badge { position:absolute; top:.6rem; right:.6rem; background:var(--accent); color:#fff; font-size:.68rem; font-weight:700; padding:.2rem .55rem; border-radius:20px; display:inline-block; z-index:1; }
 .quiz-card .quiz-title { font-size:.88rem; font-weight:700; color:var(--navy); line-height:1.4; margin:0; padding-right:5.5rem; padding-top:.15rem; }
@@ -121,8 +122,25 @@ export const FORM_PAGE_STYLES = `
 .btn-submit-main:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(26,51,102,.45); }
 .btn-submit-main:disabled { opacity:.65; transform:none; cursor:not-allowed; }
 
-.driver-app-form .dropzone-react { border:2px dashed var(--border)!important; border-radius:12px!important; background:#f8fbff!important; min-height:120px!important; padding:1.5rem; text-align:center; cursor:pointer; transition:all .2s; }
-.driver-app-form .dropzone-react:hover, .driver-app-form .dropzone-react.dragover { border-color:var(--accent)!important; background:#eef4ff!important; }
+.driver-app-form .dropzone-react,
+.add-company-modal .dropzone-react {
+  border:2px dashed var(--border)!important; border-radius:12px!important; background:#f8fbff!important;
+  min-height:120px!important; padding:1.5rem; text-align:center; cursor:pointer; transition:all .2s;
+}
+.driver-app-form .dropzone-react:hover, .driver-app-form .dropzone-react.dragover,
+.add-company-modal .dropzone-react:hover, .add-company-modal .dropzone-react.dragover {
+  border-color:var(--accent)!important; background:#eef4ff!important;
+}
+.add-company-modal .attached-company-list {
+  display:flex; flex-wrap:wrap; gap:.45rem; margin:.35rem 0 1rem;
+}
+.add-company-modal .attached-company-chip {
+  display:inline-flex; align-items:center; gap:.35rem; padding:.35rem .7rem; border-radius:999px;
+  background:#eef4ff; border:1px solid #dce8ff; color:#1a2744; font-size:.78rem; font-weight:600;
+}
+.add-company-modal .attached-company-chip span {
+  font-size:.68rem; font-weight:700; color:#6b80a3; text-transform:uppercase; letter-spacing:.04em;
+}
 
 .uploaded-files-grid { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1rem; }
 .uploaded-file-item { width:110px; }
@@ -532,6 +550,57 @@ body.swal2-shown > :not(.swal2-container) {
 
   .duration-badge { display: inline-block !important; }
 
+  /* Full per-question results (hidden on screen, same as original printscreenquizans) */
+  .driver-app-form .section-card.quizes-section {
+    display: none !important;
+  }
+  .printscreenquizans {
+    display: block !important;
+  }
+  .printscreenquizans.print-quiz-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  .printscreenquizans .printimg {
+    display: block !important;
+    max-width: 120px !important;
+    height: auto !important;
+    margin: 0.35rem 0 0.5rem !important;
+  }
+  .printscreenquizans .question-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    min-height: 0 !important;
+    padding: 10px !important;
+  }
+
+  /* English quiz: compact labels/fields so it stays on one printed page */
+  .printscreenquizans.print-english-quiz {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .printscreenquizans.print-english-quiz .section-body {
+    padding: 0.65rem 0.85rem !important;
+  }
+  .printscreenquizans.print-english-quiz .form-grid-3 {
+    gap: 0.4rem 0.7rem !important;
+    margin-bottom: 0.45rem !important;
+  }
+  .printscreenquizans.print-english-quiz .field {
+    gap: 0.15rem !important;
+  }
+  .printscreenquizans.print-english-quiz .field-label {
+    font-size: 0.55rem !important;
+    letter-spacing: 0.02em !important;
+    line-height: 1.2 !important;
+  }
+  .printscreenquizans.print-english-quiz .field-input {
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 0.5rem !important;
+    font-size: 0.72rem !important;
+  }
+
   /* Attached files — full page each (PDF pages 39–48 style) */
   .uploaded-files-grid {
     display: block !important;
@@ -678,6 +747,70 @@ export function emptyConviction() {
   return { conviction_location: '', conviction_date: '', conviction_charge: '' };
 }
 
+/** Split a companies-module address into street / city / state+zip when commas are present. */
+export function parseCompanyAddress(address) {
+  const raw = String(address || '').trim();
+  if (!raw) return { street: '', city: '', statezip: '' };
+
+  const parts = raw.split(',').map((p) => p.trim()).filter(Boolean);
+  if (parts.length >= 3) {
+    return {
+      street: parts[0],
+      city: parts[1],
+      statezip: parts.slice(2).join(', '),
+    };
+  }
+  if (parts.length === 2) {
+    const second = parts[1];
+    const cityState = second.match(/^(.*?)([A-Za-z]{2}\s+\d{5}(?:-\d{4})?)$/);
+    if (cityState && cityState[1].trim()) {
+      return {
+        street: parts[0],
+        city: cityState[1].trim(),
+        statezip: cityState[2].trim(),
+      };
+    }
+    if (/\b[A-Za-z]{2}\s+\d{5}(?:-\d{4})?\b/.test(second)) {
+      return { street: parts[0], city: '', statezip: second };
+    }
+    return { street: parts[0], city: second, statezip: '' };
+  }
+
+  const trailing = raw.match(/^(.*?)[,\s]+([^,]+?)[,\s]+([A-Za-z]{2}\s+\d{5}(?:-\d{4})?)$/);
+  if (trailing) {
+    return { street: trailing[1].trim(), city: trailing[2].trim(), statezip: trailing[3].trim() };
+  }
+  return { street: raw, city: '', statezip: '' };
+}
+
+/** Map a VerificationData company onto previous-employment autofill fields. */
+export function employmentFieldsFromCompany(company, companyName) {
+  if (!companyName) {
+    return {
+      prev_company_name: '',
+      prev_contact_person: '',
+      prev_emp_email: '',
+      prev_emp_phone: '',
+      prev_emp_address: '',
+      prev_emp_city: '',
+      prev_emp_statezip: '',
+    };
+  }
+  if (!company) {
+    return { prev_company_name: companyName };
+  }
+  const parsed = parseCompanyAddress(company.address);
+  return {
+    prev_company_name: company.company_name || companyName,
+    prev_contact_person: company.contact_name || '',
+    prev_emp_email: company.email || '',
+    prev_emp_phone: company.telephone || '',
+    prev_emp_address: parsed.street,
+    prev_emp_city: parsed.city,
+    prev_emp_statezip: parsed.statezip,
+  };
+}
+
 export function emptyEmployment(driverType = '') {
   return {
     id: 'new',
@@ -789,6 +922,7 @@ export function buildFormPayload(state, { includeCompanyId = false } = {}) {
   set('final_signature', a.final_signature);
 
   if (includeCompanyId && a.company_id) set('company_id', a.company_id);
+  if (state.extraCompanyId) set('extra_company_id', state.extraCompanyId);
 
   const sigKeys = [
     'auth_signature', 'prevemp_signature', 'credreport_signature', 'violation_signature',
@@ -890,6 +1024,10 @@ export function initStateFromPayload(data) {
     applicationId: app.id,
     userId: app.user_id,
     companies: data.companies || [],
+    extraCompanies: data.extraCompanies || [],
+    extraCompanyId: data.extraCompanyId || null,
+    primaryCompanyId: data.primaryCompanyId || null,
+    primaryCompanyName: data.primaryCompanyName || '',
     files: data.applicationFiles || app.files || [],
     profileImgBase:
       import.meta.env.VITE_PROFILE_IMG_URL ||
@@ -901,6 +1039,7 @@ export function initStateFromPayload(data) {
       'https://adminapi.dotsafetyservice.com/',
     constanciaLfdPendingFile: null,
     followUpEntries: data.followUpEntries || [],
+    driverEvaluationEntries: data.driverEvaluationEntries || [],
     correctAnswers: data.correctAnswers || null,
     quizzes: {
       english: data.englishQuestionnaire || null,
@@ -918,7 +1057,9 @@ export function initStateFromPayload(data) {
       email_address: user.email || '',
       appcompany_name: app.company_name || '',
       company_id: app.company_id || '',
-      company_display: app.company?.company_name || app.company_name || '',
+      company_display: data.extraCompanyId
+        ? app.company_name || ''
+        : app.company?.company_name || app.company_name || '',
       driver_type: app.driver_type || '',
       address: app.driver_address || '',
       city: app.driver_city || '',

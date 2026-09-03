@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { TableSkeleton } from '../components/PageSkeleton';
 
@@ -398,6 +398,7 @@ function Pagination({ pagination, onPageChange }) {
 }
 
 export default function ApplicationForms() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const listFilters = {
     is_active: searchParams.get('is_active') || '',
@@ -423,6 +424,8 @@ export default function ApplicationForms() {
   const [uiAlert, setUiAlert] = useState({ show: false, type: 'success', message: '' });
 
   const [loginApp, setLoginApp] = useState(null);
+  const [editCompanyApp, setEditCompanyApp] = useState(null);
+  const [selectedEditCompany, setSelectedEditCompany] = useState('primary');
   const [deleteApp, setDeleteApp] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -644,6 +647,29 @@ export default function ApplicationForms() {
   const openLoginModal = (app) => {
     setLoginApp(app);
     requestAnimationFrame(() => getBootstrapModal(loginModalRef.current)?.show());
+  };
+
+  const goToEditForm = (app, extraCompanyId = null) => {
+    if (!app?.user?.id) return;
+    const qs = extraCompanyId ? `?extra_company_id=${extraCompanyId}` : '';
+    navigate(`/edit-form/${app.user.id}${qs}`);
+  };
+
+  const openEditApplication = (app) => {
+    const extras = app.extra_companies || [];
+    if (!extras.length) {
+      goToEditForm(app);
+      return;
+    }
+    setEditCompanyApp(app);
+    setSelectedEditCompany('primary');
+  };
+
+  const confirmEditCompany = () => {
+    if (!editCompanyApp) return;
+    const extraId = selectedEditCompany === 'primary' ? null : selectedEditCompany;
+    goToEditForm(editCompanyApp, extraId);
+    setEditCompanyApp(null);
   };
 
   const openDeleteModal = (app) => {
@@ -925,6 +951,12 @@ export default function ApplicationForms() {
                                 >
                                   {application.company_name}
                                 </a>
+                                {(application.extra_companies || []).length > 0 ? (
+                                  <div style={{ fontSize: 12, color: '#5b6b88', fontWeight: 500 }}>
+                                    +{application.extra_companies.length} more compan
+                                    {application.extra_companies.length === 1 ? 'y' : 'ies'}
+                                  </div>
+                                ) : null}
                               </td>
                               <td className="app-name">
                                 {application.driver_name}
@@ -1036,13 +1068,14 @@ export default function ApplicationForms() {
                                     <i className="ph-duotone ph-printer"></i>
                                   </button>
                                   {application.user ? (
-                                    <Link
-                                      to={`/edit-form/${application.user.id}`}
+                                    <button
+                                      type="button"
                                       className="action-btn btn-edit-soft"
                                       title="Edit Application"
+                                      onClick={() => openEditApplication(application)}
                                     >
                                       <i className="ph-duotone ph-pencil-simple"></i>
-                                    </Link>
+                                    </button>
                                   ) : (
                                     <button
                                       className="action-btn btn-edit-soft"
@@ -1183,7 +1216,46 @@ export default function ApplicationForms() {
         </div>
       </div>
 
-      {/* Login Modal */}
+      {editCompanyApp ? (
+        <div className="modal show d-block" tabIndex={-1} style={{ background: 'rgba(10,22,40,.45)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Select company application</h5>
+                <button type="button" className="btn-close" onClick={() => setEditCompanyApp(null)} />
+              </div>
+              <div className="modal-body">
+                <p className="mb-3" style={{ fontSize: '0.9rem', color: '#5b6b88' }}>
+                  Editing any information other than the company or documents will change it in both
+                  applications. Only the company and the documents can be different.
+                </p>
+                <label className="form-label fw-semibold">Which company do you want to edit?</label>
+                <select
+                  className="form-select"
+                  value={selectedEditCompany}
+                  onChange={(e) => setSelectedEditCompany(e.target.value)}
+                >
+                  <option value="primary">{editCompanyApp.company_name || 'Primary company'}</option>
+                  {(editCompanyApp.extra_companies || []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.company_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setEditCompanyApp(null)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-primary" onClick={confirmEditCompany}>
+                  Edit application
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="modal fade" id="loginModal" tabIndex={-1} aria-hidden="true" ref={loginModalRef}>
         <div className="modal-dialog">
           <div className="modal-content">

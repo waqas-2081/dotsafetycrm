@@ -105,6 +105,18 @@ export default function Sidebar() {
                   </NavLink>
                 </li>
 
+                <li className="pc-item">
+                  <NavLink
+                    to="/sms-logs"
+                    className={({ isActive }) => `pc-link${isActive ? ' active' : ''}`}
+                  >
+                    <span className="pc-micon">
+                      <i className="ph-duotone ph-chat-circle-text"></i>
+                    </span>
+                    <span className="pc-mtext">SMS Logs</span>
+                  </NavLink>
+                </li>
+
                 {showMembersSection && (
                   <>
                     <li className="pc-item">

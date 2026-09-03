@@ -4,6 +4,7 @@ import { fileUrl } from '../formShared';
 
 export default function DocumentUpload({
   applicationId,
+  extraCompanyId = null,
   files,
   storageBase,
   onUploaded,
@@ -18,6 +19,7 @@ export default function DocumentUpload({
   const uploadOne = async (file) => {
     const fd = new FormData();
     fd.append('files', file);
+    if (extraCompanyId) fd.append('extra_company_id', extraCompanyId);
     const { data } = await api.post(`/application-forms/${applicationId}/upload`, fd);
     return data;
   };

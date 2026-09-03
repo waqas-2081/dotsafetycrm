@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import PageSkeleton from '../../components/PageSkeleton';
 import FormSections from './components/FormSections';
@@ -14,25 +14,36 @@ import { showErrorPopup, showSuccessPopup } from '../../utils/popups';
 
 export default function EditForm() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const extraCompanyId = searchParams.get('extra_company_id') || '';
   const imageInputRef = useRef(null);
+  const extraFileInputRef = useRef(null);
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showAddCompany, setShowAddCompany] = useState(false);
+  const [addCompanyId, setAddCompanyId] = useState('');
+  const [addCompanyFiles, setAddCompanyFiles] = useState([]);
+  const [addingCompany, setAddingCompany] = useState(false);
+
+  const [addCompanyDrag, setAddCompanyDrag] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.get(`/application-forms/${id}/edit`);
+      const { data } = await api.get(`/application-forms/${id}/edit`, {
+        params: extraCompanyId ? { extra_company_id: extraCompanyId } : {},
+      });
       setState(initStateFromPayload(data));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load edit form');
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, extraCompanyId]);
 
   useEffect(() => {
     load();
@@ -109,6 +120,101 @@ export default function EditForm() {
     }
   };
 
+  const usedCompanyIds = useMemo(() => {
+    if (!state) return [];
+    const ids = [state.primaryCompanyId, ...(state.extraCompanies || []).map((c) => c.company_id)];
+    return ids.filter(Boolean).map((v) => String(v));
+  }, [state]);
+
+  const attachedCompanies = useMemo(() => {
+    if (!state) return [];
+    const rows = [];
+    if (state.primaryCompanyId || state.primaryCompanyName) {
+      rows.push({
+        key: 'primary',
+        company_id: state.primaryCompanyId,
+        company_name: state.primaryCompanyName || 'Primary company',
+        label: 'Primary',
+      });
+    }
+    (state.extraCompanies || []).forEach((c) => {
+      rows.push({
+        key: `extra-${c.id}`,
+        company_id: c.company_id,
+        company_name: c.company_name || 'Company',
+        label: 'Added',
+      });
+    });
+    return rows;
+  }, [state]);
+
+  const addPendingFiles = (fileList) => {
+    const incoming = Array.from(fileList || []).map((file) => ({
+      file,
+      previewUrl: file.type?.startsWith('image/') ? URL.createObjectURL(file) : null,
+    }));
+    if (!incoming.length) return;
+    setAddCompanyFiles((prev) => [...prev, ...incoming]);
+  };
+
+  const removePendingFile = (idx) => {
+    setAddCompanyFiles((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(idx, 1);
+      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      return next;
+    });
+  };
+
+  const closeAddCompanyModal = () => {
+    setShowAddCompany(false);
+    setAddCompanyId('');
+    setAddCompanyFiles((prev) => {
+      prev.forEach((item) => {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      });
+      return [];
+    });
+    setAddCompanyDrag(false);
+  };
+
+  const iconForPending = (file) => {
+    const ext = String(file.name.split('.').pop() || '').toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return null;
+    if (ext === 'pdf') return '/assets/images/pdf.png';
+    if (['doc', 'docx'].includes(ext)) return '/assets/images/word.png';
+    return '/assets/images/txt.png';
+  };
+
+  const submitAddCompany = async () => {
+    if (!addCompanyId || !state?.applicationId) return;
+    setAddingCompany(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('company_id', addCompanyId);
+      if (state.extraCompanyId) fd.append('copy_from_extra_company_id', state.extraCompanyId);
+      addCompanyFiles.forEach((item) => fd.append('files[]', item.file));
+      const { data } = await api.post(`/application-forms/${state.applicationId}/extra-companies`, fd);
+      closeAddCompanyModal();
+      await showSuccessPopup({
+        title: 'Company added',
+        text: data.message || 'Company added to this application.',
+        confirmText: 'OK',
+      });
+      const next = {};
+      if (data.extra_company?.id) next.extra_company_id = String(data.extra_company.id);
+      setSearchParams(next);
+    } catch (err) {
+      await showErrorPopup({
+        title: 'Could not add company',
+        text: err.response?.data?.message || 'Failed to add company.',
+      });
+    } finally {
+      setAddingCompany(false);
+    }
+  };
+
   if (loading) {
     return <PageSkeleton variant="form" />;
   }
@@ -170,17 +276,15 @@ export default function EditForm() {
                 window.removeEventListener('afterprint', cleanup);
               };
               window.addEventListener('afterprint', cleanup);
-              // Wait for profile / signature images so they render in print
               const imgs = Array.from(document.querySelectorAll('.driver-app-form img'));
               Promise.all(
-                imgs.map(
-                  (img) =>
-                    img.complete
-                      ? Promise.resolve()
-                      : new Promise((resolve) => {
-                          img.addEventListener('load', resolve, { once: true });
-                          img.addEventListener('error', resolve, { once: true });
-                        })
+                imgs.map((img) =>
+                  img.complete
+                    ? Promise.resolve()
+                    : new Promise((resolve) => {
+                        img.addEventListener('load', resolve, { once: true });
+                        img.addEventListener('error', resolve, { once: true });
+                      })
                 )
               ).then(() => setTimeout(() => window.print(), 100));
             }}
@@ -203,6 +307,9 @@ export default function EditForm() {
             onClick={toggleMember}
           >
             {isMember ? 'Remove From Member List' : 'Add To Member List'}
+          </button>
+          <button type="button" className="btn-bar" onClick={() => setShowAddCompany(true)}>
+            Add another Company
           </button>
         </div>
 
@@ -236,6 +343,7 @@ export default function EditForm() {
             setField={setField}
             setSig={setSig}
             onFollowUpRefresh={load}
+            onDriverEvaluationRefresh={load}
           />
           <div className="form-fixed-actions">
             <button type="submit" className="btn-submit-main" disabled={saving}>
@@ -244,6 +352,141 @@ export default function EditForm() {
           </div>
         </form>
       </div>
+
+      {showAddCompany ? (
+        <div className="modal show d-block quiz-modal-overlay" tabIndex={-1}>
+          <div className="modal-dialog modal-lg modal-dialog-scrollable">
+            <div className="modal-content add-company-modal">
+              <div className="modal-header">
+                <h5 className="modal-title">Add another Company</h5>
+                <button type="button" className="btn-close" onClick={closeAddCompanyModal} />
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="field-label">Already on this application</label>
+                  {attachedCompanies.length ? (
+                    <div className="attached-company-list">
+                      {attachedCompanies.map((c) => (
+                        <div className="attached-company-chip" key={c.key}>
+                          {c.company_name}
+                          <span>{c.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted mb-2" style={{ fontSize: '0.85rem' }}>
+                      No companies attached yet.
+                    </p>
+                  )}
+                </div>
+
+                <div className="mb-3">
+                  <label className="field-label" htmlFor="add_company_id">
+                    Select company
+                  </label>
+                  <select
+                    id="add_company_id"
+                    className="field-select"
+                    value={addCompanyId}
+                    onChange={(e) => setAddCompanyId(e.target.value)}
+                  >
+                    <option value="">Select a company…</option>
+                    {(state.companies || []).map((c) => {
+                      const used = usedCompanyIds.includes(String(c.id));
+                      return (
+                        <option key={c.id} value={c.id} disabled={used}>
+                          {c.company_name}
+                          {used ? ' (already added)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                  Existing documents from this application will be copied. You can also upload additional
+                  files below.
+                </p>
+
+                <div
+                  className={`dropzone-react${addCompanyDrag ? ' dragover' : ''}`}
+                  onClick={() => extraFileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setAddCompanyDrag(true);
+                  }}
+                  onDragLeave={() => setAddCompanyDrag(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setAddCompanyDrag(false);
+                    addPendingFiles(e.dataTransfer.files);
+                  }}
+                >
+                  <input
+                    ref={extraFileInputRef}
+                    type="file"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      addPendingFiles(e.target.files);
+                      e.target.value = '';
+                    }}
+                  />
+                  <div className="mb-3">
+                    <i className="display-4 text-muted mdi mdi-upload-network-outline" />
+                  </div>
+                  <h4>Drop files here or click to upload.</h4>
+                </div>
+
+                {addCompanyFiles.length ? (
+                  <div className="uploaded-files-grid mt-3">
+                    {addCompanyFiles.map((item, idx) => {
+                      const icon = iconForPending(item.file);
+                      return (
+                        <div className="uploaded-file-item" key={`${item.file.name}-${idx}`}>
+                          <div className="file-card">
+                            <button
+                              type="button"
+                              className="file-del"
+                              title="Remove"
+                              onClick={() => removePendingFile(idx)}
+                            >
+                              ×
+                            </button>
+                            {item.previewUrl && !icon ? (
+                              <img src={item.previewUrl} className="file-thumb" alt={item.file.name} />
+                            ) : (
+                              <div className="file-icon-wrap">
+                                <img src={icon} alt="" width={36} height={36} />
+                              </div>
+                            )}
+                            <div className="file-name" title={item.file.name}>
+                              {item.file.name}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={closeAddCompanyModal}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!addCompanyId || usedCompanyIds.includes(String(addCompanyId)) || addingCompany}
+                  onClick={submitAddCompany}
+                >
+                  {addingCompany ? 'Adding…' : 'Add Company'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

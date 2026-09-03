@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../../../services/api';
 import { ENGLISH_QUESTIONS } from '../formShared';
+import SectionCard from './SectionCard';
 import {
   HOS_CORRECT,
   HOS_QUESTIONS,
@@ -36,7 +37,207 @@ function formatCompletedOn(iso) {
   }
 }
 
-/** Admin review — show user's answers with correct/incorrect (original edit-form modal) */
+function optionValue(opt, valueMode) {
+  return valueMode === 'index' ? opt.value : typeof opt === 'string' ? opt : opt.label;
+}
+
+function optionLabel(opt) {
+  return typeof opt === 'string' ? opt : opt.label;
+}
+
+function ScoredOptions({ q, test, correctMap, valueMode, showCorrectHint }) {
+  const userAnswer = test?.[q.key];
+  const correctAnswer = correctMap?.[q.key];
+  const userWasWrong = userAnswer != null && userAnswer !== '' && String(userAnswer) !== String(correctAnswer);
+
+  return q.options.map((opt, oi) => {
+    const value = optionValue(opt, valueMode);
+    const label = optionLabel(opt);
+    const isSelected = String(userAnswer ?? '') === String(value);
+    const isCorrectOption = String(correctAnswer ?? '') === String(value);
+    let rowClass = '';
+    if (isSelected && isCorrectOption) rowClass = 'correct-answer';
+    else if (isSelected && !isCorrectOption) rowClass = 'incorrect-answer';
+    else if (showCorrectHint && isCorrectOption && userWasWrong) rowClass = 'correct-answer';
+    return (
+      <div className={`form-check ${rowClass}`} key={`${q.key}_${oi}`}>
+        <input className="form-check-input" type="radio" disabled checked={isSelected} readOnly />
+        <label className="form-check-label">
+          {label}
+          {isSelected && isCorrectOption ? <span className="text-success ms-2 fw-bold">✓</span> : null}
+          {isSelected && !isCorrectOption ? (
+            <span className="text-danger ms-2 fw-bold">{showCorrectHint ? ' ✗ Your Answer' : '✗'}</span>
+          ) : null}
+          {showCorrectHint && isCorrectOption && userWasWrong ? (
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#155724', marginLeft: 6 }}>✓ Correct Answer</span>
+          ) : null}
+        </label>
+      </div>
+    );
+  });
+}
+
+function PrintSig({ src }) {
+  return (
+    <div className="sig-box">
+      <span className="field-label">Signature</span>
+      <div className="sig-canvas-wrap">
+        {src ? <img src={src} alt="Signature" /> : <div style={{ minHeight: 90 }} />}
+      </div>
+    </div>
+  );
+}
+
+/** Hidden on screen; shown in print with every question/answer like the original Blade print view. */
+export function QuizPrintResults({ state }) {
+  const english = state.quizzes?.english;
+  const hos = state.quizzes?.hos;
+  const preTrip = state.quizzes?.preTrip;
+  const traffic = state.quizzes?.traffic;
+  const correctFromApi = state.correctAnswers || {};
+  const fields = state.fields || {};
+
+  return (
+    <>
+      <SectionCard
+        title="English Driver Questionnaire Test"
+        iconBg="#4a1d8a"
+        className="printscreenquizans print-quiz-break print-english-quiz"
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        }
+      >
+        <div className="form-grid-3" style={{ marginBottom: '1rem' }}>
+          <div className="field">
+            <label className="field-label">Employer&apos;s Name</label>
+            <input className="field-input" value={english?.quest_emp_name || fields.appcompany_name || ''} readOnly />
+          </div>
+          <div className="field">
+            <label className="field-label">Driver&apos;s Name</label>
+            <input className="field-input" value={english?.quest_driver_name || fields.driver_name || ''} readOnly />
+          </div>
+          <div className="field">
+            <label className="field-label">Date</label>
+            <input className="field-input" value={english?.quest_date || fields.application_date || ''} readOnly />
+          </div>
+        </div>
+        <div className="form-grid-3">
+          {ENGLISH_QUESTIONS.map(([fn, fl]) => (
+            <div className="field" key={fn}>
+              <label className="field-label">{fl}</label>
+              <input className="field-input" value={english?.[fn] || ''} readOnly />
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Hours of Service Questionnaire Test"
+        iconBg="#1e5fd4"
+        className="printscreenquizans print-quiz-break"
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        }
+      >
+        <div className="form-grid">
+          {HOS_QUESTIONS.map((q, qi) => (
+            <div className="question-block p-3 border rounded" key={q.key}>
+              <label className="radiolabel fw-bold mb-3 d-block">
+                {qi + 1}. {String(q.text).replace(/^\d+\.\s*/, '')}
+              </label>
+              <ScoredOptions
+                q={q}
+                test={hos}
+                correctMap={correctFromApi.hoursOfService || HOS_CORRECT}
+                valueMode="label"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="form-grid" style={{ marginTop: '1rem' }}>
+          <div className="field">
+            <label className="field-label">Correct Answers</label>
+            <input className="field-input" value={hos?.correct_answers ?? ''} readOnly />
+          </div>
+          <PrintSig src={fields.hos_signature} />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Pre-Trip Inspection Questionnaire Test"
+        iconBg="#0d7a5e"
+        className="printscreenquizans print-quiz-break"
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        }
+      >
+        <div className="form-grid">
+          {PRETRIP_QUESTIONS.map((q, qi) => (
+            <div className="question-block p-3 border rounded" key={q.key}>
+              <label className="radiolabel fw-bold mb-3 d-block">
+                {qi + 1}. {String(q.text).replace(/^\d+\.\s*/, '')}
+              </label>
+              <ScoredOptions
+                q={q}
+                test={preTrip}
+                correctMap={correctFromApi.preTripInspection || PRETRIP_CORRECT}
+                valueMode="label"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="form-grid" style={{ marginTop: '1rem' }}>
+          <div className="field">
+            <label className="field-label">Correct Answers</label>
+            <input className="field-input" value={preTrip?.correct_answers ?? ''} readOnly />
+          </div>
+          <PrintSig src={fields.final_signature} />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Traffic & Road Sign Test"
+        iconBg="#c0392b"
+        className="printscreenquizans print-quiz-break"
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        }
+      >
+        <div className="form-grid">
+          {TRAFFIC_QUESTIONS.map((q, qi) => (
+            <div className="question-block p-3 border rounded" key={q.key}>
+              <label className="radiolabel fw-bold mb-2 d-block">
+                {qi + 1}. {String(q.text).replace(/^\d+\.\s*/, '')}
+              </label>
+              {q.image ? <img src={q.image} alt="" className="printimg quizimg" /> : null}
+              <ScoredOptions
+                q={q}
+                test={traffic}
+                correctMap={correctFromApi.trafficSigns || TRAFFIC_CORRECT}
+                valueMode="index"
+                showCorrectHint
+              />
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+    </>
+  );
+}
 function QuizResultsModal({ title, test, questions, correctMap, valueMode = 'label', onClose }) {
   const score = `${test.correct_answers}/${test.total_questions} (${Number(test.score_percentage).toFixed(1)}%)`;
 
@@ -68,8 +269,8 @@ function QuizResultsModal({ title, test, questions, correctMap, valueMode = 'lab
                       </label>
                       {q.image ? <img src={q.image} alt="" className="quizimg" /> : null}
                       {q.options.map((opt, oi) => {
-                        const value = valueMode === 'index' ? opt.value : typeof opt === 'string' ? opt : opt.label;
-                        const label = typeof opt === 'string' ? opt : opt.label;
+                        const value = optionValue(opt, valueMode);
+                        const label = optionLabel(opt);
                         const isSelected = String(userAnswer) === String(value);
                         const isCorrectOption = String(correctAnswer) === String(value);
                         let rowClass = '';

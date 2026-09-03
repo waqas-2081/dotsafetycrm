@@ -14,6 +14,7 @@ import MembersHistory from './pages/members/MembersHistory';
 import RandomReportsIndex from './pages/random-reports/RandomReportsIndex';
 import RandomReportsShow from './pages/random-reports/RandomReportsShow';
 import ElogCompanies from './pages/ElogCompanies';
+import SmsLogs from './pages/SmsLogs';
 import MyProfile from './pages/MyProfile';
 import Dashboard from './pages/Dashboard';
 import PageSkeleton from './components/PageSkeleton';
@@ -114,6 +115,14 @@ export default function App() {
           element={
             <AdminRoute>
               <ElogCompanies />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="sms-logs"
+          element={
+            <AdminRoute>
+              <SmsLogs />
             </AdminRoute>
           }
         />

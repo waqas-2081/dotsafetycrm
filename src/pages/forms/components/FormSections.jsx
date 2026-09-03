@@ -4,8 +4,9 @@ import SectionCard from './SectionCard';
 import DocumentUpload from './DocumentUpload';
 import ConstanciaLfdBlock from './ConstanciaLfdBlock';
 import FollowUpProgramBlock from './FollowUpProgramBlock';
+import DriverEvaluationReportBlock from './DriverEvaluationReportBlock';
 import EmploymentVerificationBlock from './EmploymentVerificationBlock';
-import QuizSection from './QuizSection';
+import QuizSection, { QuizPrintResults } from './QuizSection';
 import {
   DISCIPLINARY_VIOLATIONS,
   DRIVER_TYPES,
@@ -13,6 +14,7 @@ import {
   emptyConviction,
   emptyEmployment,
   emptyExperience,
+  employmentFieldsFromCompany,
 } from '../formShared';
 
 function Field({ label, children, full }) {
@@ -65,6 +67,7 @@ export default function FormSections({
   setField,
   setSig,
   onFollowUpRefresh,
+  onDriverEvaluationRefresh,
 }) {
   const readOnly = mode === 'view';
   const f = state.fields;
@@ -98,13 +101,7 @@ export default function FormSections({
 
   const onCompanySelect = (index, companyName) => {
     const company = companies.find((c) => c.company_name === companyName);
-    updateRow('employments', index, {
-      prev_company_name: companyName,
-      prev_contact_person: company?.contact_name || '',
-      prev_emp_email: company?.email || '',
-      prev_emp_phone: company?.telephone || '',
-      prev_emp_address: company?.address || state.employments[index]?.prev_emp_address || '',
-    });
+    updateRow('employments', index, employmentFieldsFromCompany(company, companyName));
   };
 
   const show = (step) => activeStep === null || activeStep === step;
@@ -508,26 +505,26 @@ export default function FormSections({
                       </select>
                     </Field>
                     <Field label="Contact Person">
-                      <input className="field-input" value={emp.prev_contact_person} readOnly />
+                      <input className="field-input" value={emp.prev_contact_person || ''} readOnly />
                     </Field>
                     <Field label="Phone">
-                      <input type="tel" className="field-input" value={emp.prev_emp_phone} readOnly />
+                      <input type="tel" className="field-input" value={emp.prev_emp_phone || ''} readOnly />
                     </Field>
                   </div>
                   <div className="form-grid-3">
                     <Field label="Email">
-                      <input type="email" className="field-input" value={emp.prev_emp_email} readOnly />
+                      <input type="email" className="field-input" value={emp.prev_emp_email || ''} readOnly />
                     </Field>
                     <Field label="Address">
-                      <input className="field-input" value={emp.prev_emp_address} disabled={readOnly} onChange={(e) => updateRow('employments', i, { prev_emp_address: e.target.value })} />
+                      <input className="field-input" value={emp.prev_emp_address || ''} disabled={readOnly} onChange={(e) => updateRow('employments', i, { prev_emp_address: e.target.value })} />
                     </Field>
                     <Field label="City">
-                      <input className="field-input" value={emp.prev_emp_city} disabled={readOnly} onChange={(e) => updateRow('employments', i, { prev_emp_city: e.target.value })} />
+                      <input className="field-input" value={emp.prev_emp_city || ''} disabled={readOnly} onChange={(e) => updateRow('employments', i, { prev_emp_city: e.target.value })} />
                     </Field>
                   </div>
                   <div className="form-grid-3">
                     <Field label="State & Zip">
-                      <input className="field-input" value={emp.prev_emp_statezip} disabled={readOnly} onChange={(e) => updateRow('employments', i, { prev_emp_statezip: e.target.value })} />
+                      <input className="field-input" value={emp.prev_emp_statezip || ''} disabled={readOnly} onChange={(e) => updateRow('employments', i, { prev_emp_statezip: e.target.value })} />
                     </Field>
                     <Field label="Position Held">
                       <input className="field-input" value={emp.prev_position_held} disabled={readOnly} onChange={(e) => updateRow('employments', i, { prev_position_held: e.target.value })} />
@@ -941,6 +938,7 @@ export default function FormSections({
           <SectionCard title="Upload Documents">
             <DocumentUpload
               applicationId={state.applicationId}
+              extraCompanyId={state.extraCompanyId}
               files={state.files}
               storageBase={state.storageBase}
               readOnly={readOnly}
@@ -968,6 +966,14 @@ export default function FormSections({
       {/* STEP 8 — Quizzes */}
       {show(8) && (
         <div className="step-content quizesmainsec" data-step-content="8">
+          {mode === 'edit' ? (
+            <DriverEvaluationReportBlock
+              applicationId={state.applicationId}
+              driverName={f.driver_name}
+              initialEntries={state.driverEvaluationEntries}
+              onRefresh={onDriverEvaluationRefresh}
+            />
+          ) : null}
           <SectionCard
             title={mode === 'edit' || mode === 'view' ? 'All Quizzes Results' : 'Attempt All Quizzes'}
             iconBg="#4a1d8a"
@@ -975,6 +981,7 @@ export default function FormSections({
           >
             <QuizSection mode={mode} state={state} setState={setState} readOnly={readOnly} />
           </SectionCard>
+          <QuizPrintResults state={state} />
         </div>
       )}
     </>
